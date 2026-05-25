@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "version": "1.0.0",
+  "name": "My Vite Extension",
+  "side_panel": {
+    "default_path": "index.html"
+  },
+  "action": {
+    "default_title": "Open My Extension"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["scripting", "activeTab", "sidePanel"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "icons": {
+    "32": "icon32.png"
+  }
+}
