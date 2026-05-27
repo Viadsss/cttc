@@ -7,8 +7,10 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import { ChartContainer } from "@/components/ui/chart"
 import type { AxeResults, Result, RunOptions } from "axe-core"
 import { useState } from "react"
+import { RadialBarChart, RadialBar, PolarAngleAxis } from "recharts"
 import {
   AlertCircle,
   CheckCircle2,
@@ -258,7 +260,7 @@ export function App() {
                   <p className="mb-0.5 text-xs font-medium text-muted-foreground">
                     Tested URL
                   </p>
-                  <p className="font-mono text-xs break-all text-primary">
+                  <p className="flex rounded bg-primary px-2 py-1 font-mono text-xs break-all text-white">
                     {results.url}
                   </p>
                 </div>
@@ -284,29 +286,39 @@ export function App() {
                   <p className="text-4xl font-bold text-foreground">
                     {scorePercentage}%
                   </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {results!.passes.length} passed /{" "}
+                    {results!.violations.length + results!.incomplete.length}{" "}
+                    issues
+                  </p>
                 </div>
-                <div className="h-24 w-24">
-                  <svg className="-rotate-90" viewBox="0 0 100 100">
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="45"
-                      fill="none"
-                      stroke="var(--color-border)"
-                      strokeWidth="8"
+                <ChartContainer
+                  config={{
+                    score: { label: "Score", color: "var(--color-chart-1)" },
+                  }}
+                  className="h-32 w-32"
+                >
+                  <RadialBarChart
+                    data={[{ score: scorePercentage }]}
+                    startAngle={90}
+                    endAngle={90 - 360 * (scorePercentage / 100)}
+                    innerRadius={44}
+                    outerRadius={58}
+                    barSize={12}
+                  >
+                    <PolarAngleAxis
+                      type="number"
+                      domain={[0, 100]}
+                      tick={false}
                     />
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="45"
-                      fill="none"
-                      stroke="var(--color-chart-1)"
-                      strokeWidth="8"
-                      strokeDasharray={`${(scorePercentage / 100) * 283} 283`}
-                      strokeLinecap="round"
+                    <RadialBar
+                      dataKey="score"
+                      background={{ fill: "var(--color-border)" }}
+                      fill="var(--color-chart-1)"
+                      cornerRadius={6}
                     />
-                  </svg>
-                </div>
+                  </RadialBarChart>
+                </ChartContainer>
               </CardContent>
             </Card>
 
@@ -590,7 +602,7 @@ function IssueCard({ issue, type, isExpanded, onToggle }: IssueCardProps) {
               href={issue.helpUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block text-xs text-primary underline hover:text-primary/80"
+              className="inline-block text-xs font-medium text-primary underline underline-offset-4 hover:text-primary/80 dark:text-purple-300 dark:hover:text-purple-200"
             >
               Learn more →
             </a>
