@@ -1,4 +1,12 @@
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 import type { AxeResults, Result, RunOptions } from "axe-core"
 import { useState } from "react"
 import {
@@ -6,65 +14,106 @@ import {
   CheckCircle2,
   HelpCircle,
   Zap,
-  MinusCircle,
   ChevronDown,
   ChevronRight,
 } from "lucide-react"
-import type axe from "axe-core"
 
-/**
- * axe-core impact levels (low → high severity):
- *   minor     – unlikely to impact most users; cosmetic/inconvenient
- *   moderate  – affects some users; should be fixed but isn't blocking
- *   serious   – impacts many users; difficult to work around
- *   critical  – blocks access for many users; must fix immediately
- */
-const impactConfig: Record<
-  string,
-  { label: string; bg: string; border: string; text: string; dot: string }
+// ─── Impact config ───────────────────────────────────────────────────────────
+//
+// axe-core assigns one of four impact levels to each violation/incomplete:
+//   minor    – cosmetic; unlikely to block most users
+//   moderate – affects some users; should be addressed
+//   serious  – difficult to work around; impacts many users
+//   critical – blocks access entirely; must fix immediately
+
+type ImpactLevel = "minor" | "moderate" | "serious" | "critical" | "unknown"
+
+const IMPACT: Record<
+  ImpactLevel,
+  {
+    label: string
+    description: string
+    badgeVariant: "outline" // we'll colour via className
+    className: string // badge colour classes
+    dotClass: string
+  }
 > = {
   minor: {
     label: "Minor",
-    bg: "bg-sky-50",
-    border: "border-sky-300",
-    text: "text-sky-700",
-    dot: "bg-sky-400",
+    description: "Cosmetic; unlikely to block most users.",
+    badgeVariant: "outline",
+    className: "border-sky-300 bg-sky-50 text-sky-700",
+    dotClass: "bg-sky-400",
   },
   moderate: {
     label: "Moderate",
-    bg: "bg-amber-50",
-    border: "border-amber-300",
-    text: "text-amber-700",
-    dot: "bg-amber-400",
+    description: "Affects some users; should be addressed.",
+    badgeVariant: "outline",
+    className: "border-amber-300 bg-amber-50 text-amber-700",
+    dotClass: "bg-amber-400",
   },
   serious: {
     label: "Serious",
-    bg: "bg-orange-50",
-    border: "border-orange-400",
-    text: "text-orange-700",
-    dot: "bg-orange-500",
+    description: "Hard to work around; impacts many users.",
+    badgeVariant: "outline",
+    className: "border-orange-400 bg-orange-50 text-orange-700",
+    dotClass: "bg-orange-500",
   },
   critical: {
     label: "Critical",
-    bg: "bg-red-50",
-    border: "border-red-500",
-    text: "text-red-700",
-    dot: "bg-red-600",
+    description: "Blocks access entirely; fix immediately.",
+    badgeVariant: "outline",
+    className: "border-red-500 bg-red-50 text-red-700",
+    dotClass: "bg-red-600",
   },
   unknown: {
     label: "Unknown",
-    bg: "bg-gray-50",
-    border: "border-gray-300",
-    text: "text-gray-600",
-    dot: "bg-gray-400",
+    description: "No impact level assigned.",
+    badgeVariant: "outline",
+    className: "border-gray-300 bg-gray-50 text-gray-600",
+    dotClass: "bg-gray-400",
   },
 }
 
 function getImpact(impact?: string | null) {
-  return impactConfig[impact ?? ""] ?? impactConfig.unknown
+  return IMPACT[(impact as ImpactLevel) ?? "unknown"] ?? IMPACT.unknown
 }
 
-// ─── Collapsible Section ────────────────────────────────────────────────────
+// ─── FailureSummary ──────────────────────────────────────────────────────────
+// axe produces strings like:
+//   "Fix any of the following:\n  Element has insufficient color contrast..."
+// We split on \n, detect the header line vs bullet lines, and render them.
+
+function FailureSummary({ summary }: { summary: string }) {
+  const lines = summary
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean)
+  if (lines.length === 0) return null
+
+  const [header, ...items] = lines
+
+  return (
+    <div className="rounded-md border border-border bg-card p-3 text-xs">
+      <p className="mb-1.5 font-semibold text-foreground">{header}</p>
+      {items.length > 0 && (
+        <ul className="space-y-1 pl-1">
+          {items.map((item, i) => (
+            <li
+              key={i}
+              className="flex items-start gap-2 text-muted-foreground"
+            >
+              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/50" />
+              {item}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+// ─── Section ─────────────────────────────────────────────────────────────────
 
 interface SectionProps {
   title: string
@@ -84,31 +133,31 @@ function Section({
   const [open, setOpen] = useState(defaultOpen)
 
   return (
-    <div className="space-y-2">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left transition-colors hover:bg-muted"
-      >
-        <span className="text-muted-foreground">
-          {open ? (
-            <ChevronDown className="h-4 w-4" />
-          ) : (
-            <ChevronRight className="h-4 w-4" />
-          )}
-        </span>
-        {icon}
-        <span className="font-semibold text-foreground">{title}</span>
-        <span className="ml-1 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-          {count}
-        </span>
-      </button>
-
-      {open && <div className="space-y-2 pl-1">{children}</div>}
-    </div>
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger asChild>
+        <button className="flex w-full items-center gap-2 rounded-lg px-1 py-1.5 text-left transition-colors hover:bg-muted">
+          <span className="text-muted-foreground">
+            {open ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </span>
+          {icon}
+          <span className="font-semibold text-foreground">{title}</span>
+          <Badge variant="secondary" className="ml-1 rounded-full text-xs">
+            {count}
+          </Badge>
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="mt-2 space-y-2 pl-1">{children}</div>
+      </CollapsibleContent>
+    </Collapsible>
   )
 }
 
-// ─── App ────────────────────────────────────────────────────────────────────
+// ─── App ─────────────────────────────────────────────────────────────────────
 
 export function App() {
   const [results, setResults] = useState<AxeResults | null>(null)
@@ -156,13 +205,16 @@ export function App() {
         },
       })
 
-      const axeResults = injectionResults[0].result as AxeResults
-      setResults(axeResults)
+      setResults(injectionResults[0].result as AxeResults)
     } catch (error) {
       console.error("Error running accessibility check:", error)
     } finally {
       setLoading(false)
     }
+  }
+
+  function toggleIssue(key: string) {
+    setExpandedIssue((prev) => (prev === key ? null : key))
   }
 
   const scorePercentage = results
@@ -175,45 +227,12 @@ export function App() {
       )
     : 0
 
-  const summaryCards = results
-    ? [
-        {
-          label: "Issues",
-          icon: <AlertCircle className="h-5 w-5" />,
-          count: results.violations.length,
-          color: "text-destructive",
-        },
-        {
-          label: "Needs Review",
-          icon: <HelpCircle className="h-5 w-5" />,
-          count: results.incomplete.length,
-          color: "text-amber-500",
-        },
-        {
-          label: "Passed",
-          icon: <CheckCircle2 className="h-5 w-5" />,
-          count: results.passes.length,
-          color: "text-green-600",
-        },
-        {
-          label: "N/A",
-          icon: <MinusCircle className="h-5 w-5" />,
-          count: results.inapplicable.length,
-          color: "text-muted-foreground",
-        },
-      ]
-    : []
-
-  function toggleIssue(key: string) {
-    setExpandedIssue((prev) => (prev === key ? null : key))
-  }
-
   return (
     <div className="min-h-screen bg-background p-4 font-sans">
-      <div className="mx-auto max-w-2xl">
+      <div className="mx-auto max-w-2xl space-y-6">
         {/* Header */}
-        <div className="mb-6">
-          <div className="mb-2 flex items-center gap-2">
+        <div>
+          <div className="mb-1 flex items-center gap-2">
             <Zap className="h-6 w-6 text-primary" />
             <h1 className="text-2xl font-bold text-foreground">AccessCheck</h1>
           </div>
@@ -222,53 +241,52 @@ export function App() {
           </p>
         </div>
 
-        {/* Main Button */}
         <Button
           onClick={onClick}
           disabled={loading}
-          className="mb-6 h-12 w-full text-base font-semibold"
+          className="h-12 w-full text-base font-semibold"
         >
-          {loading ? "Scanning..." : "Run Accessibility Check"}
+          {loading ? "Scanning…" : "Run Accessibility Check"}
         </Button>
 
-        {/* Results */}
         {results && (
-          <div className="space-y-6">
-            {/* URL & Timestamp */}
-            <div className="rounded-lg border border-border bg-card p-4">
-              <div className="space-y-3 text-sm">
+          <>
+            {/* Meta */}
+            <Card>
+              <CardContent className="space-y-2 pt-4 text-sm">
                 <div>
-                  <p className="mb-1 font-medium text-muted-foreground">
+                  <p className="mb-0.5 text-xs font-medium text-muted-foreground">
                     Tested URL
                   </p>
-                  <p className="truncate font-mono text-xs break-all text-primary">
+                  <p className="font-mono text-xs break-all text-primary">
                     {results.url}
                   </p>
                 </div>
+                <Separator />
                 <div>
-                  <p className="mb-1 font-medium text-muted-foreground">
+                  <p className="mb-0.5 text-xs font-medium text-muted-foreground">
                     Tested At
                   </p>
                   <p className="text-xs text-foreground">
                     {new Date(results.timestamp).toLocaleString()}
                   </p>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
-            {/* Score Card */}
-            <div className="rounded-lg border border-border bg-card p-6">
-              <div className="flex items-center justify-between">
+            {/* Score */}
+            <Card>
+              <CardContent className="flex items-center justify-between pt-6">
                 <div>
-                  <p className="mb-2 text-sm font-medium text-muted-foreground">
+                  <p className="mb-1 text-sm font-medium text-muted-foreground">
                     Overall Score
                   </p>
-                  <div className="text-4xl font-bold text-foreground">
+                  <p className="text-4xl font-bold text-foreground">
                     {scorePercentage}%
-                  </div>
+                  </p>
                 </div>
-                <div className="relative h-24 w-24">
-                  <svg className="-rotate-90 transform" viewBox="0 0 100 100">
+                <div className="h-24 w-24">
+                  <svg className="-rotate-90" viewBox="0 0 100 100">
                     <circle
                       cx="50"
                       cy="50"
@@ -289,67 +307,87 @@ export function App() {
                     />
                   </svg>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
-            {/* Impact Legend */}
-            <div className="rounded-lg border border-border bg-card p-4">
-              <p className="mb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                Impact Severity Legend
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {(["minor", "moderate", "serious", "critical"] as const).map(
-                  (level) => {
-                    const cfg = impactConfig[level]
-                    return (
-                      <div
-                        key={level}
-                        className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${cfg.bg} ${cfg.border} ${cfg.text}`}
+            {/* Impact Severity Legend */}
+            <Card>
+              <CardHeader className="pt-4 pb-2">
+                <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                  Impact Severity
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {(
+                  ["minor", "moderate", "serious", "critical"] as ImpactLevel[]
+                ).map((level) => {
+                  const cfg = IMPACT[level]
+                  return (
+                    <div key={level} className="flex items-center gap-3">
+                      <Badge
+                        variant="outline"
+                        className={`w-24 justify-center gap-1.5 text-xs font-medium ${cfg.className}`}
                       >
-                        <span className={`h-2 w-2 rounded-full ${cfg.dot}`} />
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${cfg.dotClass}`}
+                        />
                         {cfg.label}
-                      </div>
-                    )
-                  }
-                )}
-              </div>
-              <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-                <strong>Minor</strong> – unlikely to impact most users.{" "}
-                <strong>Moderate</strong> – affects some; should be fixed.{" "}
-                <strong>Serious</strong> – impacts many; hard to work around.{" "}
-                <strong>Critical</strong> – blocks access; fix immediately.
-              </p>
-            </div>
+                      </Badge>
+                      <p className="text-xs text-muted-foreground">
+                        {cfg.description}
+                      </p>
+                    </div>
+                  )
+                })}
+              </CardContent>
+            </Card>
 
-            {/* Summary Cards (4-col) */}
-            <div className="grid grid-cols-4 gap-3">
-              {summaryCards.map((card) => (
-                <div
-                  key={card.label}
-                  className="rounded-lg border border-border bg-card p-4 text-center"
-                >
-                  <div className={`mb-2 flex justify-center ${card.color}`}>
-                    {card.icon}
-                  </div>
-                  <p className="text-2xl font-bold text-foreground">
-                    {card.count}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {card.label}
-                  </p>
-                </div>
+            {/* Summary grid — 3 cols (no inapplicable) */}
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                {
+                  label: "Issues",
+                  icon: <AlertCircle className="h-5 w-5" />,
+                  count: results.violations.length,
+                  color: "text-destructive",
+                },
+                {
+                  label: "Needs Review",
+                  icon: <HelpCircle className="h-5 w-5" />,
+                  count: results.incomplete.length,
+                  color: "text-amber-500",
+                },
+                {
+                  label: "Passed",
+                  icon: <CheckCircle2 className="h-5 w-5" />,
+                  count: results.passes.length,
+                  color: "text-green-600",
+                },
+              ].map((card) => (
+                <Card key={card.label}>
+                  <CardContent className="pt-4 text-center">
+                    <div className={`mb-2 flex justify-center ${card.color}`}>
+                      {card.icon}
+                    </div>
+                    <p className="text-2xl font-bold text-foreground">
+                      {card.count}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {card.label}
+                    </p>
+                  </CardContent>
+                </Card>
               ))}
             </div>
 
-            {/* All four sections — each collapsible */}
+            {/* Sections */}
             <div className="space-y-4">
-              {/* Violations */}
               {results.violations.length > 0 && (
                 <Section
                   title="Accessibility Issues"
                   count={results.violations.length}
-                  icon={<AlertCircle className="h-5 w-5 text-destructive" />}
-                  defaultOpen={true}
+                  icon={<AlertCircle className="h-4 w-4 text-destructive" />}
+                  defaultOpen
                 >
                   {results.violations.map((issue) => {
                     const key = `violation-${issue.id}`
@@ -366,13 +404,12 @@ export function App() {
                 </Section>
               )}
 
-              {/* Incomplete */}
               {results.incomplete.length > 0 && (
                 <Section
                   title="Needs Review"
                   count={results.incomplete.length}
-                  icon={<HelpCircle className="h-5 w-5 text-amber-500" />}
-                  defaultOpen={true}
+                  icon={<HelpCircle className="h-4 w-4 text-amber-500" />}
+                  defaultOpen
                 >
                   {results.incomplete.map((issue) => {
                     const key = `incomplete-${issue.id}`
@@ -389,12 +426,11 @@ export function App() {
                 </Section>
               )}
 
-              {/* Passes */}
               {results.passes.length > 0 && (
                 <Section
                   title="Passed Rules"
                   count={results.passes.length}
-                  icon={<CheckCircle2 className="h-5 w-5 text-green-600" />}
+                  icon={<CheckCircle2 className="h-4 w-4 text-green-600" />}
                   defaultOpen={false}
                 >
                   {results.passes.map((issue) => {
@@ -412,64 +448,39 @@ export function App() {
                 </Section>
               )}
 
-              {/* Inapplicable */}
-              {results.inapplicable.length > 0 && (
-                <Section
-                  title="Not Applicable"
-                  count={results.inapplicable.length}
-                  icon={
-                    <MinusCircle className="h-5 w-5 text-muted-foreground" />
-                  }
-                  defaultOpen={false}
-                >
-                  {results.inapplicable.map((issue) => {
-                    const key = `inapplicable-${issue.id}`
-                    return (
-                      <IssueCard
-                        key={issue.id}
-                        issue={issue}
-                        type="inapplicable"
-                        isExpanded={expandedIssue === key}
-                        onToggle={() => toggleIssue(key)}
-                      />
-                    )
-                  })}
-                </Section>
-              )}
-
-              {/* All-clear banner */}
               {results.violations.length === 0 &&
                 results.incomplete.length === 0 && (
-                  <div className="rounded-lg border border-border bg-card p-6 text-center">
-                    <CheckCircle2 className="mx-auto mb-3 h-12 w-12 text-chart-1" />
-                    <h3 className="mb-1 font-semibold text-foreground">
-                      Great job!
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      No accessibility issues detected
-                    </p>
-                  </div>
+                  <Card>
+                    <CardContent className="py-8 text-center">
+                      <CheckCircle2 className="mx-auto mb-3 h-12 w-12 text-green-500" />
+                      <h3 className="mb-1 font-semibold text-foreground">
+                        Great job!
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        No accessibility issues detected
+                      </p>
+                    </CardContent>
+                  </Card>
                 )}
             </div>
-          </div>
+          </>
         )}
 
-        {/* Footer */}
         {!results && (
-          <div className="mt-8 text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-muted-foreground">
             Click the button above to scan this page for accessibility issues
-          </div>
+          </p>
         )}
       </div>
     </div>
   )
 }
 
-// ─── IssueCard ───────────────────────────────────────────────────────────────
+// ─── IssueCard ────────────────────────────────────────────────────────────────
 
 interface IssueCardProps {
   issue: Result
-  type: "violations" | "incomplete" | "passes" | "inapplicable"
+  type: "violations" | "incomplete" | "passes"
   isExpanded: boolean
   onToggle: () => void
 }
@@ -477,105 +488,95 @@ interface IssueCardProps {
 function IssueCard({ issue, type, isExpanded, onToggle }: IssueCardProps) {
   const impact = getImpact(issue.impact)
 
-  const badgeClass =
+  const impactBadgeClass =
     type === "passes"
-      ? "bg-green-50 border border-green-300 text-green-700"
-      : type === "inapplicable"
-        ? "bg-gray-50 border border-gray-300 text-gray-500"
-        : `${impact.bg} border ${impact.border} ${impact.text}`
+      ? "border-green-300 bg-green-50 text-green-700"
+      : impact.className
 
-  const badgeLabel =
-    type === "passes"
-      ? "Passed"
-      : type === "inapplicable"
-        ? "N/A"
-        : impact.label
-
-  const showDot = type !== "passes" && type !== "inapplicable"
+  const impactLabel = type === "passes" ? "Passed" : impact.label
+  const showDot = type !== "passes"
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card">
+    <Card className="overflow-hidden">
       <button
         onClick={onToggle}
         className="flex w-full items-start justify-between px-4 py-3 text-left transition-colors hover:bg-muted"
       >
-        <div className="flex-1">
-          <h4 className="mb-1 text-sm font-semibold text-foreground">
+        <div className="min-w-0 flex-1">
+          <p className="mb-1 text-sm font-semibold text-foreground">
             {issue.help}
-          </h4>
+          </p>
           <p className="text-xs text-muted-foreground">{issue.description}</p>
           <div className="mt-2 flex flex-wrap gap-2">
-            {/* Impact / status badge */}
-            <span
-              className={`inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium ${badgeClass}`}
+            {/* Impact badge */}
+            <Badge
+              variant="outline"
+              className={`gap-1 text-xs font-medium ${impactBadgeClass}`}
             >
               {showDot && (
-                <span className={`h-1.5 w-1.5 rounded-full ${impact.dot}`} />
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${impact.dotClass}`}
+                />
               )}
-              {badgeLabel}
-            </span>
+              {impactLabel}
+            </Badge>
             {/* Element count */}
             {issue.nodes.length > 0 && (
-              <span className="inline-block rounded bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
+              <Badge variant="secondary" className="text-xs">
                 {issue.nodes.length}{" "}
                 {issue.nodes.length === 1 ? "element" : "elements"}
-              </span>
+              </Badge>
             )}
             {/* WCAG tags */}
             {issue.tags
               .filter((t) => t.startsWith("wcag") || t === "best-practice")
               .slice(0, 3)
               .map((tag) => (
-                <span
+                <Badge
                   key={tag}
-                  className="inline-block rounded bg-muted px-2 py-1 text-xs text-muted-foreground"
+                  variant="outline"
+                  className="text-xs text-muted-foreground"
                 >
                   {tag}
-                </span>
+                </Badge>
               ))}
           </div>
         </div>
-        <div className="mt-1 ml-2 text-lg leading-none text-muted-foreground">
+        <span className="mt-0.5 ml-2 text-lg leading-none text-muted-foreground">
           {isExpanded ? "−" : "+"}
-        </div>
+        </span>
       </button>
 
       {isExpanded && (
-        <div className="space-y-3 border-t border-border bg-muted px-4 py-3">
-          {/* Description */}
+        <div className="space-y-4 border-t border-border bg-muted px-4 py-3">
+          {/* What to fix */}
           <div>
-            <p className="mb-1 text-xs font-semibold text-muted-foreground">
-              {type === "passes"
-                ? "Why it passed:"
-                : type === "inapplicable"
-                  ? "Why it's not applicable:"
-                  : "What to fix:"}
+            <p className="mb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              {type === "passes" ? "Why it passed" : "What to fix"}
             </p>
-            <p className="rounded border border-border bg-card p-2 text-xs text-foreground">
+            <p className="rounded-md border border-border bg-card p-2 text-xs text-foreground">
               {issue.help}
             </p>
           </div>
 
-          {/* Elements — all of them, no cap */}
+          {/* Affected elements */}
           {issue.nodes.length > 0 && (
             <div>
-              <p className="mb-2 text-xs font-semibold text-muted-foreground">
+              <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                 {type === "passes"
-                  ? `Passing Elements (${issue.nodes.length}):`
-                  : type === "inapplicable"
-                    ? `Checked Elements (${issue.nodes.length}):`
-                    : `Affected Elements (${issue.nodes.length}):`}
+                  ? `Passing Elements (${issue.nodes.length})`
+                  : `Affected Elements (${issue.nodes.length})`}
               </p>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {issue.nodes.map((node, idx) => (
-                  <div key={idx} className="space-y-1">
-                    <div className="rounded border border-border bg-card p-2 font-mono text-xs break-all text-foreground">
+                  <div key={idx} className="space-y-2">
+                    {/* HTML snippet */}
+                    <div className="rounded-md border border-border bg-card p-2 font-mono text-xs break-all text-foreground">
                       {node.html}
                     </div>
+                    {/* Failure summary — parsed into header + bullet list */}
                     {node.failureSummary && (
-                      <p className="pl-1 text-xs text-muted-foreground italic">
-                        {node.failureSummary}
-                      </p>
+                      <FailureSummary summary={node.failureSummary} />
                     )}
                   </div>
                 ))}
@@ -596,7 +597,7 @@ function IssueCard({ issue, type, isExpanded, onToggle }: IssueCardProps) {
           )}
         </div>
       )}
-    </div>
+    </Card>
   )
 }
 
