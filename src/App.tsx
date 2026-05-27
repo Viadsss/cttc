@@ -7,7 +7,11 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { ChartContainer } from "@/components/ui/chart"
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart"
 import type { AxeResults, Result, RunOptions } from "axe-core"
 import { useState } from "react"
 import { RadialBarChart, RadialBar, PolarAngleAxis } from "recharts"
@@ -18,60 +22,45 @@ import {
   Zap,
   ChevronDown,
   ChevronRight,
+  Crosshair,
+  X,
 } from "lucide-react"
 
-// ─── Impact config ───────────────────────────────────────────────────────────
-//
-// axe-core assigns one of four impact levels to each violation/incomplete:
-//   minor    – cosmetic; unlikely to block most users
-//   moderate – affects some users; should be addressed
-//   serious  – difficult to work around; impacts many users
-//   critical – blocks access entirely; must fix immediately
+// ─── Impact config ────────────────────────────────────────────────────────────
 
 type ImpactLevel = "minor" | "moderate" | "serious" | "critical" | "unknown"
 
 const IMPACT: Record<
   ImpactLevel,
-  {
-    label: string
-    description: string
-    badgeVariant: "outline" // we'll colour via className
-    className: string // badge colour classes
-    dotClass: string
-  }
+  { label: string; description: string; className: string; dotClass: string }
 > = {
   minor: {
     label: "Minor",
     description: "Cosmetic; unlikely to block most users.",
-    badgeVariant: "outline",
     className: "border-sky-300 bg-sky-50 text-sky-700",
     dotClass: "bg-sky-400",
   },
   moderate: {
     label: "Moderate",
     description: "Affects some users; should be addressed.",
-    badgeVariant: "outline",
     className: "border-amber-300 bg-amber-50 text-amber-700",
     dotClass: "bg-amber-400",
   },
   serious: {
     label: "Serious",
     description: "Hard to work around; impacts many users.",
-    badgeVariant: "outline",
     className: "border-orange-400 bg-orange-50 text-orange-700",
     dotClass: "bg-orange-500",
   },
   critical: {
     label: "Critical",
     description: "Blocks access entirely; fix immediately.",
-    badgeVariant: "outline",
     className: "border-red-500 bg-red-50 text-red-700",
     dotClass: "bg-red-600",
   },
   unknown: {
     label: "Unknown",
     description: "No impact level assigned.",
-    badgeVariant: "outline",
     className: "border-gray-300 bg-gray-50 text-gray-600",
     dotClass: "bg-gray-400",
   },
@@ -81,10 +70,53 @@ function getImpact(impact?: string | null) {
   return IMPACT[(impact as ImpactLevel) ?? "unknown"] ?? IMPACT.unknown
 }
 
-// ─── FailureSummary ──────────────────────────────────────────────────────────
-// axe produces strings like:
-//   "Fix any of the following:\n  Element has insufficient color contrast..."
-// We split on \n, detect the header line vs bullet lines, and render them.
+// ─── Highlight helpers ────────────────────────────────────────────────────────
+// axe's node.target is a CrossTreeSelector array. For simple same-frame pages
+// the first entry is a plain CSS selector string we can pass straight to
+// querySelector. We inject a red outline + scroll via chrome.scripting.
+
+const AXE_ATTR = "data-axe-highlight"
+
+async function highlightElement(selector: string) {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+  await chrome.scripting.executeScript({
+    target: { tabId: tab.id! },
+    args: [selector, AXE_ATTR],
+    func: (sel, attr) => {
+      // Remove any previous highlights
+      document.querySelectorAll(`[${attr}]`).forEach((el) => {
+        ;(el as HTMLElement).style.removeProperty("outline")
+        ;(el as HTMLElement).style.removeProperty("outline-offset")
+        el.removeAttribute(attr)
+      })
+      const el = document.querySelector(sel) as HTMLElement | null
+      if (!el) return
+      el.setAttribute(attr, "true")
+      el.style.outline = "3px solid #ef4444"
+      el.style.outlineOffset = "3px"
+      el.scrollIntoView({ behavior: "smooth", block: "center" })
+    },
+  })
+}
+
+async function clearHighlights() {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+  await chrome.scripting.executeScript({
+    target: { tabId: tab.id! },
+    args: [AXE_ATTR],
+    func: (attr) => {
+      document.querySelectorAll(`[${attr}]`).forEach((el) => {
+        ;(el as HTMLElement).style.removeProperty("outline")
+        ;(el as HTMLElement).style.removeProperty("outline-offset")
+        el.removeAttribute(attr)
+      })
+    },
+  })
+}
+
+// ─── FailureSummary ───────────────────────────────────────────────────────────
+// axe produces: "Fix any of the following:\n  reason one\n  reason two"
+// We split on \n and render the first line as a header, the rest as bullets.
 
 function FailureSummary({ summary }: { summary: string }) {
   const lines = summary
@@ -92,9 +124,7 @@ function FailureSummary({ summary }: { summary: string }) {
     .map((l) => l.trim())
     .filter(Boolean)
   if (lines.length === 0) return null
-
   const [header, ...items] = lines
-
   return (
     <div className="rounded-md border border-border bg-card p-3 text-xs">
       <p className="mb-1.5 font-semibold text-foreground">{header}</p>
@@ -115,7 +145,7 @@ function FailureSummary({ summary }: { summary: string }) {
   )
 }
 
-// ─── Section ─────────────────────────────────────────────────────────────────
+// ─── Section ──────────────────────────────────────────────────────────────────
 
 interface SectionProps {
   title: string
@@ -133,7 +163,6 @@ function Section({
   children,
 }: SectionProps) {
   const [open, setOpen] = useState(defaultOpen)
-
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger asChild>
@@ -159,7 +188,7 @@ function Section({
   )
 }
 
-// ─── App ─────────────────────────────────────────────────────────────────────
+// ─── App ──────────────────────────────────────────────────────────────────────
 
 export function App() {
   const [results, setResults] = useState<AxeResults | null>(null)
@@ -260,7 +289,7 @@ export function App() {
                   <p className="mb-0.5 text-xs font-medium text-muted-foreground">
                     Tested URL
                   </p>
-                  <p className="flex rounded bg-primary px-2 py-1 font-mono text-xs break-all text-white">
+                  <p className="font-mono text-xs break-all text-primary">
                     {results.url}
                   </p>
                 </div>
@@ -287,8 +316,8 @@ export function App() {
                     {scorePercentage}%
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {results!.passes.length} passed /{" "}
-                    {results!.violations.length + results!.incomplete.length}{" "}
+                    {results.passes.length} passed /{" "}
+                    {results.violations.length + results.incomplete.length}{" "}
                     issues
                   </p>
                 </div>
@@ -316,6 +345,14 @@ export function App() {
                       background={{ fill: "var(--color-border)" }}
                       fill="var(--color-chart-1)"
                       cornerRadius={6}
+                    />
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          hideLabel
+                          formatter={(v) => [`${v}%`, "Score"]}
+                        />
+                      }
                     />
                   </RadialBarChart>
                 </ChartContainer>
@@ -354,7 +391,7 @@ export function App() {
               </CardContent>
             </Card>
 
-            {/* Summary grid — 3 cols (no inapplicable) */}
+            {/* Summary grid */}
             <div className="grid grid-cols-3 gap-3">
               {[
                 {
@@ -499,19 +536,39 @@ interface IssueCardProps {
 
 function IssueCard({ issue, type, isExpanded, onToggle }: IssueCardProps) {
   const impact = getImpact(issue.impact)
+  // Track which selector is currently highlighted so only one is active per card
+  const [activeSelector, setActiveSelector] = useState<string | null>(null)
 
   const impactBadgeClass =
     type === "passes"
       ? "border-green-300 bg-green-50 text-green-700"
       : impact.className
-
   const impactLabel = type === "passes" ? "Passed" : impact.label
   const showDot = type !== "passes"
+
+  async function handleHighlight(selector: string) {
+    if (activeSelector === selector) {
+      await clearHighlights()
+      setActiveSelector(null)
+    } else {
+      await highlightElement(selector)
+      setActiveSelector(selector)
+    }
+  }
+
+  // When the card collapses, clear any active highlight
+  async function handleToggle() {
+    if (isExpanded && activeSelector) {
+      await clearHighlights()
+      setActiveSelector(null)
+    }
+    onToggle()
+  }
 
   return (
     <Card className="overflow-hidden">
       <button
-        onClick={onToggle}
+        onClick={handleToggle}
         className="flex w-full items-start justify-between px-4 py-3 text-left transition-colors hover:bg-muted"
       >
         <div className="min-w-0 flex-1">
@@ -520,7 +577,6 @@ function IssueCard({ issue, type, isExpanded, onToggle }: IssueCardProps) {
           </p>
           <p className="text-xs text-muted-foreground">{issue.description}</p>
           <div className="mt-2 flex flex-wrap gap-2">
-            {/* Impact badge */}
             <Badge
               variant="outline"
               className={`gap-1 text-xs font-medium ${impactBadgeClass}`}
@@ -532,14 +588,12 @@ function IssueCard({ issue, type, isExpanded, onToggle }: IssueCardProps) {
               )}
               {impactLabel}
             </Badge>
-            {/* Element count */}
             {issue.nodes.length > 0 && (
               <Badge variant="secondary" className="text-xs">
                 {issue.nodes.length}{" "}
                 {issue.nodes.length === 1 ? "element" : "elements"}
               </Badge>
             )}
-            {/* WCAG tags */}
             {issue.tags
               .filter((t) => t.startsWith("wcag") || t === "best-practice")
               .slice(0, 3)
@@ -580,18 +634,68 @@ function IssueCard({ issue, type, isExpanded, onToggle }: IssueCardProps) {
                   : `Affected Elements (${issue.nodes.length})`}
               </p>
               <div className="space-y-3">
-                {issue.nodes.map((node, idx) => (
-                  <div key={idx} className="space-y-2">
-                    {/* HTML snippet */}
-                    <div className="rounded-md border border-border bg-card p-2 font-mono text-xs break-all text-foreground">
-                      {node.html}
+                {issue.nodes.map((node, idx) => {
+                  // node.target[0] is the CSS selector for the element in the main frame
+                  const rawTarget = node.target?.[0]
+                  const selector =
+                    typeof rawTarget === "string" ? rawTarget : null
+                  const isHighlighted =
+                    selector !== null && activeSelector === selector
+
+                  return (
+                    <div key={idx} className="space-y-2">
+                      {/* Row: label + highlight toggle */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-muted-foreground">
+                          Element {idx + 1}
+                        </span>
+                        {selector && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={`h-6 gap-1.5 px-2 text-xs transition-colors ${
+                              isHighlighted
+                                ? "border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
+                                : "text-muted-foreground hover:text-foreground"
+                            }`}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleHighlight(selector)
+                            }}
+                          >
+                            {isHighlighted ? (
+                              <>
+                                <X className="h-3 w-3" />
+                                Clear
+                              </>
+                            ) : (
+                              <>
+                                <Crosshair className="h-3 w-3" />
+                                Highlight
+                              </>
+                            )}
+                          </Button>
+                        )}
+                      </div>
+
+                      {/* HTML snippet — ring goes red when highlighted */}
+                      <div
+                        className={`rounded-md border bg-card p-2 font-mono text-xs break-all text-foreground transition-all ${
+                          isHighlighted
+                            ? "border-red-400 ring-2 ring-red-200"
+                            : "border-border"
+                        }`}
+                      >
+                        {node.html}
+                      </div>
+
+                      {/* Failure summary */}
+                      {node.failureSummary && (
+                        <FailureSummary summary={node.failureSummary} />
+                      )}
                     </div>
-                    {/* Failure summary — parsed into header + bullet list */}
-                    {node.failureSummary && (
-                      <FailureSummary summary={node.failureSummary} />
-                    )}
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}
@@ -602,7 +706,7 @@ function IssueCard({ issue, type, isExpanded, onToggle }: IssueCardProps) {
               href={issue.helpUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block text-xs font-medium text-primary underline underline-offset-4 hover:text-primary/80 dark:text-purple-300 dark:hover:text-purple-200"
+              className="inline-block text-xs font-medium text-primary underline underline-offset-4 hover:text-primary/80"
             >
               Learn more →
             </a>
