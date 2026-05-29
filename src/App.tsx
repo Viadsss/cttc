@@ -27,7 +27,7 @@ import {
   Wrench,
   Loader2,
 } from "lucide-react"
-import { DOMAIN_FIXES } from "./fixes"
+import { URL_FIXES } from "./fixes"
 
 // ─── Impact config ────────────────────────────────────────────────────────────
 
@@ -193,7 +193,7 @@ export function App() {
   const [applyingFixes, setApplyingFixes] = useState(false)
   const [fixesApplied, setFixesApplied] = useState(false)
   const [expandedIssue, setExpandedIssue] = useState<string | null>(null)
-  const [currentHostname, setCurrentHostname] = useState("")
+  const [currentTabUrl, setCurrentTabUrl] = useState("")
 
   async function runScan() {
     try {
@@ -204,8 +204,7 @@ export function App() {
         active: true,
         currentWindow: true,
       })
-      const hostname = new URL(tab.url ?? "").hostname
-      setCurrentHostname(hostname)
+      setCurrentTabUrl(tab.url ?? "")
 
       await chrome.scripting.executeScript({
         target: { tabId: tab.id! },
@@ -248,20 +247,19 @@ export function App() {
   }
 
   async function handleApplyFixes() {
-    // Find the fix function for the current domain
-    const fixEntry = Object.entries(DOMAIN_FIXES).find(([domain]) =>
-      currentHostname.includes(domain)
-    )
-    if (!fixEntry) return
-
-    const [, fixFn] = fixEntry
-
     try {
       setApplyingFixes(true)
       const [tab] = await chrome.tabs.query({
         active: true,
         currentWindow: true,
       })
+
+      const fixEntry = Object.entries(URL_FIXES).find(
+        ([url]) => tab.url === url
+      )
+      if (!fixEntry) return
+
+      const [, fixFn] = fixEntry
 
       // Inject the fix function directly into the page
       await chrome.scripting.executeScript({
@@ -295,9 +293,7 @@ export function App() {
     : 0
 
   // Check if we have a fix registered for the current domain
-  const hasFix = Object.keys(DOMAIN_FIXES).some((domain) =>
-    currentHostname.includes(domain)
-  )
+  const hasFix = currentTabUrl in URL_FIXES
 
   return (
     <div className="min-h-screen bg-background p-4 font-sans">
@@ -368,8 +364,8 @@ export function App() {
                       className={`text-sm font-semibold ${fixesApplied ? "text-green-800" : "text-blue-800"}`}
                     >
                       {fixesApplied
-                        ? `✓ Fixes applied for ${currentHostname}`
-                        : `We have fixes available for ${currentHostname}`}
+                        ? `✓ Fixes applied for ${currentTabUrl}`
+                        : `We have fixes available for ${currentTabUrl}`}
                     </p>
                     <p
                       className={`mt-0.5 text-xs ${fixesApplied ? "text-green-600" : "text-blue-600"}`}
