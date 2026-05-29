@@ -24,7 +24,10 @@ import {
   ChevronRight,
   Crosshair,
   X,
+  Wrench,
+  Loader2,
 } from "lucide-react"
+import { DOMAIN_FIXES } from "./fixes"
 
 // ─── Impact config ────────────────────────────────────────────────────────────
 
@@ -71,9 +74,6 @@ function getImpact(impact?: string | null) {
 }
 
 // ─── Highlight helpers ────────────────────────────────────────────────────────
-// axe's node.target is a CrossTreeSelector array. For simple same-frame pages
-// the first entry is a plain CSS selector string we can pass straight to
-// querySelector. We inject a red outline + scroll via chrome.scripting.
 
 const AXE_ATTR = "data-axe-highlight"
 
@@ -83,7 +83,6 @@ async function highlightElement(selector: string) {
     target: { tabId: tab.id! },
     args: [selector, AXE_ATTR],
     func: (sel, attr) => {
-      // Remove any previous highlights
       document.querySelectorAll(`[${attr}]`).forEach((el) => {
         ;(el as HTMLElement).style.removeProperty("outline")
         ;(el as HTMLElement).style.removeProperty("outline-offset")
@@ -115,8 +114,6 @@ async function clearHighlights() {
 }
 
 // ─── FailureSummary ───────────────────────────────────────────────────────────
-// axe produces: "Fix any of the following:\n  reason one\n  reason two"
-// We split on \n and render the first line as a header, the rest as bullets.
 
 function FailureSummary({ summary }: { summary: string }) {
   const lines = summary
@@ -193,15 +190,22 @@ function Section({
 export function App() {
   const [results, setResults] = useState<AxeResults | null>(null)
   const [loading, setLoading] = useState(false)
+  const [applyingFixes, setApplyingFixes] = useState(false)
+  const [fixesApplied, setFixesApplied] = useState(false)
   const [expandedIssue, setExpandedIssue] = useState<string | null>(null)
+  const [currentHostname, setCurrentHostname] = useState("")
 
-  const onClick = async () => {
+  async function runScan() {
     try {
       setLoading(true)
+      setFixesApplied(false)
+
       const [tab] = await chrome.tabs.query({
         active: true,
         currentWindow: true,
       })
+      const hostname = new URL(tab.url ?? "").hostname
+      setCurrentHostname(hostname)
 
       await chrome.scripting.executeScript({
         target: { tabId: tab.id! },
@@ -225,15 +229,14 @@ export function App() {
       const injectionResults = await chrome.scripting.executeScript({
         target: { tabId: tab.id! },
         args: [axeOptions],
-        func: (options) => {
-          return new Promise<unknown>((resolve, reject) => {
+        func: (options) =>
+          new Promise<unknown>((resolve, reject) => {
             // @ts-expect-error - axe is injected into the page
             axe.run(document, options, (err: Error, results: unknown) => {
               if (err) reject(err)
               else resolve(results)
             })
-          })
-        },
+          }),
       })
 
       setResults(injectionResults[0].result as AxeResults)
@@ -241,6 +244,39 @@ export function App() {
       console.error("Error running accessibility check:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleApplyFixes() {
+    // Find the fix function for the current domain
+    const fixEntry = Object.entries(DOMAIN_FIXES).find(([domain]) =>
+      currentHostname.includes(domain)
+    )
+    if (!fixEntry) return
+
+    const [, fixFn] = fixEntry
+
+    try {
+      setApplyingFixes(true)
+      const [tab] = await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      })
+
+      // Inject the fix function directly into the page
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id! },
+        func: fixFn,
+      })
+
+      setFixesApplied(true)
+
+      // Re-run the scan so results reflect the fixes
+      await runScan()
+    } catch (error) {
+      console.error("Error applying fixes:", error)
+    } finally {
+      setApplyingFixes(false)
     }
   }
 
@@ -258,6 +294,11 @@ export function App() {
       )
     : 0
 
+  // Check if we have a fix registered for the current domain
+  const hasFix = Object.keys(DOMAIN_FIXES).some((domain) =>
+    currentHostname.includes(domain)
+  )
+
   return (
     <div className="min-h-screen bg-background p-4 font-sans">
       <div className="mx-auto max-w-2xl space-y-6">
@@ -273,11 +314,18 @@ export function App() {
         </div>
 
         <Button
-          onClick={onClick}
-          disabled={loading}
+          onClick={runScan}
+          disabled={loading || applyingFixes}
           className="h-12 w-full text-base font-semibold"
         >
-          {loading ? "Scanning…" : "Run Accessibility Check"}
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Scanning…
+            </>
+          ) : (
+            "Run Accessibility Check"
+          )}
         </Button>
 
         {results && (
@@ -304,6 +352,56 @@ export function App() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Fix available banner */}
+            {hasFix && (
+              <Card
+                className={
+                  fixesApplied
+                    ? "border-green-300 bg-green-50"
+                    : "border-blue-200 bg-blue-50"
+                }
+              >
+                <CardContent className="flex items-center justify-between pt-4 pb-4">
+                  <div>
+                    <p
+                      className={`text-sm font-semibold ${fixesApplied ? "text-green-800" : "text-blue-800"}`}
+                    >
+                      {fixesApplied
+                        ? `✓ Fixes applied for ${currentHostname}`
+                        : `We have fixes available for ${currentHostname}`}
+                    </p>
+                    <p
+                      className={`mt-0.5 text-xs ${fixesApplied ? "text-green-600" : "text-blue-600"}`}
+                    >
+                      {fixesApplied
+                        ? "Page patched and rescanned."
+                        : "Click to inject accessibility fixes and rescan."}
+                    </p>
+                  </div>
+                  {!fixesApplied && (
+                    <Button
+                      size="sm"
+                      disabled={applyingFixes}
+                      className="ml-4 shrink-0 gap-1.5 bg-blue-600 text-white hover:bg-blue-700"
+                      onClick={handleApplyFixes}
+                    >
+                      {applyingFixes ? (
+                        <>
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Applying…
+                        </>
+                      ) : (
+                        <>
+                          <Wrench className="h-3 w-3" />
+                          Apply Fixes
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Score */}
             <Card>
@@ -536,7 +634,6 @@ interface IssueCardProps {
 
 function IssueCard({ issue, type, isExpanded, onToggle }: IssueCardProps) {
   const impact = getImpact(issue.impact)
-  // Track which selector is currently highlighted so only one is active per card
   const [activeSelector, setActiveSelector] = useState<string | null>(null)
 
   const impactBadgeClass =
@@ -556,7 +653,6 @@ function IssueCard({ issue, type, isExpanded, onToggle }: IssueCardProps) {
     }
   }
 
-  // When the card collapses, clear any active highlight
   async function handleToggle() {
     if (isExpanded && activeSelector) {
       await clearHighlights()
@@ -615,7 +711,6 @@ function IssueCard({ issue, type, isExpanded, onToggle }: IssueCardProps) {
 
       {isExpanded && (
         <div className="space-y-4 border-t border-border bg-muted px-4 py-3">
-          {/* What to fix */}
           <div>
             <p className="mb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
               {type === "passes" ? "Why it passed" : "What to fix"}
@@ -625,7 +720,6 @@ function IssueCard({ issue, type, isExpanded, onToggle }: IssueCardProps) {
             </p>
           </div>
 
-          {/* Affected elements */}
           {issue.nodes.length > 0 && (
             <div>
               <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
@@ -635,7 +729,6 @@ function IssueCard({ issue, type, isExpanded, onToggle }: IssueCardProps) {
               </p>
               <div className="space-y-3">
                 {issue.nodes.map((node, idx) => {
-                  // node.target[0] is the CSS selector for the element in the main frame
                   const rawTarget = node.target?.[0]
                   const selector =
                     typeof rawTarget === "string" ? rawTarget : null
@@ -644,7 +737,6 @@ function IssueCard({ issue, type, isExpanded, onToggle }: IssueCardProps) {
 
                   return (
                     <div key={idx} className="space-y-2">
-                      {/* Row: label + highlight toggle */}
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-medium text-muted-foreground">
                           Element {idx + 1}
@@ -678,7 +770,6 @@ function IssueCard({ issue, type, isExpanded, onToggle }: IssueCardProps) {
                         )}
                       </div>
 
-                      {/* HTML snippet — ring goes red when highlighted */}
                       <div
                         className={`rounded-md border bg-card p-2 font-mono text-xs break-all text-foreground transition-all ${
                           isHighlighted
@@ -689,7 +780,6 @@ function IssueCard({ issue, type, isExpanded, onToggle }: IssueCardProps) {
                         {node.html}
                       </div>
 
-                      {/* Failure summary */}
                       {node.failureSummary && (
                         <FailureSummary summary={node.failureSummary} />
                       )}
@@ -700,7 +790,6 @@ function IssueCard({ issue, type, isExpanded, onToggle }: IssueCardProps) {
             </div>
           )}
 
-          {/* Learn more */}
           {issue.helpUrl && (
             <a
               href={issue.helpUrl}
