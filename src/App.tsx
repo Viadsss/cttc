@@ -1,7 +1,3 @@
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
 import {
   Collapsible,
   CollapsibleContent,
@@ -16,16 +12,13 @@ import type { AxeResults, Result, RunOptions } from "axe-core"
 import { useState } from "react"
 import { RadialBarChart, RadialBar, PolarAngleAxis } from "recharts"
 import {
-  AlertCircle,
-  CheckCircle2,
-  HelpCircle,
-  Zap,
   ChevronDown,
   ChevronRight,
   Crosshair,
   X,
   Wrench,
   Loader2,
+  Zap,
 } from "lucide-react"
 import { URL_FIXES } from "./fixes"
 
@@ -35,37 +28,52 @@ type ImpactLevel = "minor" | "moderate" | "serious" | "critical" | "unknown"
 
 const IMPACT: Record<
   ImpactLevel,
-  { label: string; description: string; className: string; dotClass: string }
+  {
+    label: string
+    code: string
+    description: string
+    className: string
+    barClass: string
+  }
 > = {
   minor: {
-    label: "Minor",
-    description: "Cosmetic; unlikely to block most users.",
-    className: "border-sky-300 bg-sky-50 text-sky-700",
-    dotClass: "bg-sky-400",
+    label: "MINOR",
+    code: "P4",
+    description: "Cosmetic — unlikely to block most users.",
+    className:
+      "text-sky-500 dark:text-sky-400 border-sky-300 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/40",
+    barClass: "bg-sky-500 dark:bg-sky-400",
   },
   moderate: {
-    label: "Moderate",
-    description: "Affects some users; should be addressed.",
-    className: "border-amber-300 bg-amber-50 text-amber-700",
-    dotClass: "bg-amber-400",
+    label: "MODERATE",
+    code: "P3",
+    description: "Affects some users — should be addressed.",
+    className:
+      "text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40",
+    barClass: "bg-amber-500 dark:bg-amber-400",
   },
   serious: {
-    label: "Serious",
-    description: "Hard to work around; impacts many users.",
-    className: "border-orange-400 bg-orange-50 text-orange-700",
-    dotClass: "bg-orange-500",
+    label: "SERIOUS",
+    code: "P2",
+    description: "Hard to work around — impacts many users.",
+    className:
+      "text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/40",
+    barClass: "bg-orange-500 dark:bg-orange-400",
   },
   critical: {
-    label: "Critical",
-    description: "Blocks access entirely; fix immediately.",
-    className: "border-red-500 bg-red-50 text-red-700",
-    dotClass: "bg-red-600",
+    label: "CRITICAL",
+    code: "P1",
+    description: "Blocks access entirely — fix immediately.",
+    className:
+      "text-red-600 dark:text-red-400 border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/40",
+    barClass: "bg-red-500",
   },
   unknown: {
-    label: "Unknown",
+    label: "UNKNOWN",
+    code: "P?",
     description: "No impact level assigned.",
-    className: "border-gray-300 bg-gray-50 text-gray-600",
-    dotClass: "bg-gray-400",
+    className: "text-muted-foreground border-border bg-muted/40",
+    barClass: "bg-muted-foreground/40",
   },
 }
 
@@ -123,16 +131,18 @@ function FailureSummary({ summary }: { summary: string }) {
   if (lines.length === 0) return null
   const [header, ...items] = lines
   return (
-    <div className="rounded-md border border-border bg-card p-3 text-xs">
-      <p className="mb-1.5 font-semibold text-foreground">{header}</p>
+    <div className="rounded border border-border bg-muted/50 p-3 text-xs">
+      <p className="mb-2 font-mono text-[10px] font-semibold tracking-wider text-foreground uppercase">
+        {header}
+      </p>
       {items.length > 0 && (
-        <ul className="space-y-1 pl-1">
+        <ul className="space-y-1">
           {items.map((item, i) => (
             <li
               key={i}
-              className="flex items-start gap-2 text-muted-foreground"
+              className="flex items-start gap-2 font-mono text-muted-foreground"
             >
-              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/50" />
+              <span className="text-muted-foreground/40 select-none">›</span>
               {item}
             </li>
           ))}
@@ -142,12 +152,26 @@ function FailureSummary({ summary }: { summary: string }) {
   )
 }
 
+// ─── DiagRow ─────────────────────────────────────────────────────────────────
+
+function DiagRow({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-baseline gap-3 font-mono text-xs">
+      <span className="w-16 shrink-0 tracking-widest text-muted-foreground/60 uppercase">
+        {label}
+      </span>
+      <span className="break-all text-foreground">{value}</span>
+    </div>
+  )
+}
+
 // ─── Section ──────────────────────────────────────────────────────────────────
 
 interface SectionProps {
   title: string
   count: number
-  icon: React.ReactNode
+  prefix: string
+  accent: string
   defaultOpen?: boolean
   children: React.ReactNode
 }
@@ -155,33 +179,67 @@ interface SectionProps {
 function Section({
   title,
   count,
-  icon,
+  prefix,
+  accent,
   defaultOpen = true,
   children,
 }: SectionProps) {
   const [open, setOpen] = useState(defaultOpen)
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger asChild>
-        <button className="flex w-full items-center gap-2 rounded-lg px-1 py-1.5 text-left transition-colors hover:bg-muted">
-          <span className="text-muted-foreground">
-            {open ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            )}
-          </span>
-          {icon}
-          <span className="font-semibold text-foreground">{title}</span>
-          <Badge variant="secondary" className="ml-1 rounded-full text-xs">
-            {count}
-          </Badge>
-        </button>
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <div className="mt-2 space-y-2 pl-1">{children}</div>
-      </CollapsibleContent>
-    </Collapsible>
+    <div className="overflow-hidden rounded-lg border border-border">
+      <Collapsible open={open} onOpenChange={setOpen}>
+        <CollapsibleTrigger asChild>
+          <button className="flex w-full items-center gap-3 border-b border-border bg-muted/50 px-4 py-3 text-left transition-colors hover:bg-muted">
+            <span
+              className={`font-mono text-[10px] font-bold tracking-widest ${accent}`}
+            >
+              {prefix}
+            </span>
+            <span className="flex-1 font-mono text-xs font-semibold tracking-wider text-foreground uppercase">
+              {title}
+            </span>
+            <span className="mr-2 font-mono text-xs text-muted-foreground/50">
+              [{count}]
+            </span>
+            <span className="text-muted-foreground/40">
+              {open ? (
+                <ChevronDown className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5" />
+              )}
+            </span>
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="divide-y divide-border/60 bg-background">
+            {children}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
+  )
+}
+
+// ─── StatTile ─────────────────────────────────────────────────────────────────
+
+function StatTile({
+  label,
+  count,
+  accent,
+}: {
+  label: string
+  count: number
+  accent: string
+}) {
+  return (
+    <div className="flex flex-col gap-1 rounded-lg border border-border bg-muted/40 p-4">
+      <span className={`font-mono text-2xl font-bold tabular-nums ${accent}`}>
+        {count}
+      </span>
+      <span className="font-mono text-[10px] tracking-widest text-muted-foreground/60 uppercase">
+        {label}
+      </span>
+    </div>
   )
 }
 
@@ -199,18 +257,15 @@ export function App() {
     try {
       setLoading(true)
       setFixesApplied(false)
-
       const [tab] = await chrome.tabs.query({
         active: true,
         currentWindow: true,
       })
       setCurrentTabUrl(tab.url ?? "")
-
       await chrome.scripting.executeScript({
         target: { tabId: tab.id! },
         files: ["node_modules/axe-core/axe.min.js"],
       })
-
       const axeOptions: RunOptions = {
         runOnly: {
           type: "tag",
@@ -224,20 +279,18 @@ export function App() {
           ],
         },
       }
-
       const injectionResults = await chrome.scripting.executeScript({
         target: { tabId: tab.id! },
         args: [axeOptions],
         func: (options) =>
           new Promise<unknown>((resolve, reject) => {
-            // @ts-expect-error - axe is injected into the page
+            // @ts-expect-error - axe is injected
             axe.run(document, options, (err: Error, results: unknown) => {
               if (err) reject(err)
               else resolve(results)
             })
           }),
       })
-
       setResults(injectionResults[0].result as AxeResults)
     } catch (error) {
       console.error("Error running accessibility check:", error)
@@ -253,23 +306,16 @@ export function App() {
         active: true,
         currentWindow: true,
       })
-
       const fixEntry = Object.entries(URL_FIXES).find(
         ([url]) => tab.url === url
       )
       if (!fixEntry) return
-
       const [, fixFn] = fixEntry
-
-      // Inject the fix function directly into the page
       await chrome.scripting.executeScript({
         target: { tabId: tab.id! },
         func: fixFn,
       })
-
       setFixesApplied(true)
-
-      // Re-run the scan so results reflect the fixes
       await runScan()
     } catch (error) {
       console.error("Error applying fixes:", error)
@@ -282,152 +328,150 @@ export function App() {
     setExpandedIssue((prev) => (prev === key ? null : key))
   }
 
-  const scorePercentage = results
-    ? Math.round(
-        (results.passes.length /
-          (results.passes.length +
-            results.violations.length +
-            results.incomplete.length)) *
-          100
-      )
+  const total = results
+    ? results.passes.length +
+      results.violations.length +
+      results.incomplete.length
     : 0
+  const scorePercentage =
+    results && total > 0 ? Math.round((results.passes.length / total) * 100) : 0
 
-  // Check if we have a fix registered for the current domain
   const hasFix = currentTabUrl in URL_FIXES
 
   return (
-    <div className="min-h-screen bg-background p-4 font-sans">
-      <div className="mx-auto max-w-2xl space-y-6">
+    <div className="min-h-screen bg-background p-4 font-mono text-foreground">
+      <div className="mx-auto max-w-2xl space-y-5">
         {/* Header */}
-        <div>
-          <div className="mb-1 flex items-center gap-2">
-            <Zap className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground">AccessCheck</h1>
+        <div className="flex items-start justify-between pt-1">
+          <div>
+            <div className="mb-0.5 flex items-center gap-2">
+              <Zap className="h-4 w-4 text-amber-500" />
+              <h1 className="text-sm font-bold tracking-[0.2em] text-foreground uppercase">
+                AccessCheck
+              </h1>
+              <span className="rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                v1
+              </span>
+            </div>
+            <p className="text-[11px] tracking-wide text-muted-foreground/60">
+              axe-core · wcag 2.x audit engine
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Web accessibility testing powered by axe-core
-          </p>
+          <div className="flex items-center gap-1.5 text-[10px] tracking-widest text-muted-foreground/40 uppercase">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500/60" />
+            ready
+          </div>
         </div>
 
-        <Button
+        {/* Scan button */}
+        <button
           onClick={runScan}
           disabled={loading || applyingFixes}
-          className="h-12 w-full text-base font-semibold"
+          className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-border bg-muted/50 text-xs font-bold tracking-[0.15em] text-foreground uppercase transition-all hover:border-foreground/20 hover:bg-muted disabled:opacity-40"
         >
           {loading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Scanning…
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-500" />
+              <span className="text-amber-500">scanning…</span>
             </>
           ) : (
-            "Run Accessibility Check"
+            <>
+              <span className="text-muted-foreground/40">›</span>
+              run accessibility audit
+            </>
           )}
-        </Button>
+        </button>
 
         {results && (
           <>
-            {/* Meta */}
-            <Card>
-              <CardContent className="space-y-2 pt-4 text-sm">
-                <div>
-                  <p className="mb-0.5 text-xs font-medium text-muted-foreground">
-                    Tested URL
-                  </p>
-                  <p className="font-mono text-xs break-all text-primary">
+            {/* Meta panel */}
+            <div className="space-y-2 rounded-lg border border-border bg-muted/30 px-4 py-3">
+              <DiagRow
+                label="url"
+                value={
+                  <span className="text-[11px] text-amber-600 dark:text-amber-400">
                     {results.url}
-                  </p>
-                </div>
-                <Separator />
-                <div>
-                  <p className="mb-0.5 text-xs font-medium text-muted-foreground">
-                    Tested At
-                  </p>
-                  <p className="text-xs text-foreground">
-                    {new Date(results.timestamp).toLocaleString()}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Fix available banner */}
-            {hasFix && (
-              <Card
-                className={
-                  fixesApplied
-                    ? "border-green-300 bg-green-50"
-                    : "border-blue-200 bg-blue-50"
+                  </span>
                 }
+              />
+              <div className="border-t border-border" />
+              <DiagRow
+                label="time"
+                value={new Date(results.timestamp).toLocaleString(undefined, {
+                  dateStyle: "short",
+                  timeStyle: "medium",
+                })}
+              />
+              <DiagRow
+                label="engine"
+                value="axe-core · wcag2a wcag2aa wcag21aa wcag22aa"
+              />
+            </div>
+
+            {/* Fix banner */}
+            {hasFix && (
+              <div
+                className={`flex items-center justify-between gap-4 rounded-lg border px-4 py-3 ${
+                  fixesApplied
+                    ? "border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30"
+                    : "border-blue-300 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30"
+                }`}
               >
-                <CardContent className="flex items-center justify-between pt-4 pb-4">
-                  <div>
-                    <p
-                      className={`text-sm font-semibold ${fixesApplied ? "text-green-800" : "text-blue-800"}`}
-                    >
-                      {fixesApplied
-                        ? `✓ Fixes applied for ${currentTabUrl}`
-                        : `We have fixes available for ${currentTabUrl}`}
-                    </p>
-                    <p
-                      className={`mt-0.5 text-xs ${fixesApplied ? "text-green-600" : "text-blue-600"}`}
-                    >
-                      {fixesApplied
-                        ? "Page patched and rescanned."
-                        : "Click to inject accessibility fixes and rescan."}
-                    </p>
-                  </div>
-                  {!fixesApplied && (
-                    <Button
-                      size="sm"
-                      disabled={applyingFixes}
-                      className="ml-4 shrink-0 gap-1.5 bg-blue-600 text-white hover:bg-blue-700"
-                      onClick={handleApplyFixes}
-                    >
-                      {applyingFixes ? (
-                        <>
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                          Applying…
-                        </>
-                      ) : (
-                        <>
-                          <Wrench className="h-3 w-3" />
-                          Apply Fixes
-                        </>
-                      )}
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
+                <div>
+                  <p
+                    className={`mb-0.5 text-[11px] font-bold tracking-wider uppercase ${
+                      fixesApplied
+                        ? "text-emerald-700 dark:text-emerald-400"
+                        : "text-blue-700 dark:text-blue-400"
+                    }`}
+                  >
+                    {fixesApplied ? "✓ patch applied" : "patch available"}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {fixesApplied
+                      ? "Accessibility fixes injected — rescanning complete."
+                      : "Known fixes available for this page. Inject and rescan."}
+                  </p>
+                </div>
+                {!fixesApplied && (
+                  <button
+                    disabled={applyingFixes}
+                    onClick={handleApplyFixes}
+                    className="flex shrink-0 items-center gap-1.5 rounded border border-blue-300 bg-blue-100 px-3 py-1.5 text-[11px] tracking-wider text-blue-700 uppercase transition-colors hover:border-blue-500 hover:bg-blue-200 disabled:opacity-40 dark:border-blue-700 dark:bg-blue-900/50 dark:text-blue-300 dark:hover:bg-blue-900"
+                  >
+                    {applyingFixes ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        applying
+                      </>
+                    ) : (
+                      <>
+                        <Wrench className="h-3 w-3" />
+                        inject
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
             )}
 
-            {/* Score */}
-            <Card>
-              <CardContent className="flex items-center justify-between pt-6">
-                <div>
-                  <p className="mb-1 text-sm font-medium text-muted-foreground">
-                    Overall Score
-                  </p>
-                  <p className="text-4xl font-bold text-foreground">
-                    {scorePercentage}%
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {results.passes.length} passed /{" "}
-                    {results.violations.length + results.incomplete.length}{" "}
-                    issues
-                  </p>
-                </div>
+            {/* Score + stats */}
+            <div className="grid grid-cols-4 gap-3">
+              {/* Score card */}
+              <div className="col-span-1 flex flex-col items-center justify-center gap-1 rounded-lg border border-border bg-muted/40 p-4">
                 <ChartContainer
                   config={{
-                    score: { label: "Score", color: "var(--color-chart-1)" },
+                    score: { label: "Score", color: "rgb(245 158 11)" },
                   }}
-                  className="h-32 w-32"
+                  className="h-20 w-20"
                 >
                   <RadialBarChart
                     data={[{ score: scorePercentage }]}
                     startAngle={90}
                     endAngle={90 - 360 * (scorePercentage / 100)}
-                    innerRadius={44}
-                    outerRadius={58}
-                    barSize={12}
+                    innerRadius={30}
+                    outerRadius={40}
+                    barSize={8}
                   >
                     <PolarAngleAxis
                       type="number"
@@ -437,8 +481,8 @@ export function App() {
                     <RadialBar
                       dataKey="score"
                       background={{ fill: "var(--color-border)" }}
-                      fill="var(--color-chart-1)"
-                      cornerRadius={6}
+                      fill="rgb(245 158 11)"
+                      cornerRadius={4}
                     />
                     <ChartTooltip
                       content={
@@ -450,86 +494,69 @@ export function App() {
                     />
                   </RadialBarChart>
                 </ChartContainer>
-              </CardContent>
-            </Card>
+                <span className="font-mono text-lg font-bold text-amber-500 tabular-nums">
+                  {scorePercentage}%
+                </span>
+                <span className="font-mono text-[9px] tracking-widest text-muted-foreground/50 uppercase">
+                  score
+                </span>
+              </div>
 
-            {/* Impact Severity Legend */}
-            <Card>
-              <CardHeader className="pt-4 pb-2">
-                <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                  Impact Severity
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-2">
+              {/* Stat tiles */}
+              <div className="col-span-3 grid grid-cols-3 gap-3">
+                <StatTile
+                  label="issues"
+                  count={results.violations.length}
+                  accent="text-red-500 dark:text-red-400"
+                />
+                <StatTile
+                  label="review"
+                  count={results.incomplete.length}
+                  accent="text-amber-600 dark:text-amber-400"
+                />
+                <StatTile
+                  label="passed"
+                  count={results.passes.length}
+                  accent="text-emerald-600 dark:text-emerald-400"
+                />
+              </div>
+            </div>
+
+            {/* Severity legend */}
+            <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
+              <p className="mb-3 text-[10px] tracking-widest text-muted-foreground/60 uppercase">
+                impact severity
+              </p>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2">
                 {(
-                  ["minor", "moderate", "serious", "critical"] as ImpactLevel[]
+                  ["critical", "serious", "moderate", "minor"] as ImpactLevel[]
                 ).map((level) => {
                   const cfg = IMPACT[level]
                   return (
-                    <div key={level} className="flex items-center gap-3">
-                      <Badge
-                        variant="outline"
-                        className={`w-24 justify-center gap-1.5 text-xs font-medium ${cfg.className}`}
+                    <div key={level} className="flex items-center gap-2">
+                      <span
+                        className={`w-6 text-center font-mono text-[10px] font-bold ${cfg.className.split(" ")[0]}`}
                       >
-                        <span
-                          className={`h-1.5 w-1.5 rounded-full ${cfg.dotClass}`}
-                        />
-                        {cfg.label}
-                      </Badge>
-                      <p className="text-xs text-muted-foreground">
-                        {cfg.description}
-                      </p>
+                        {cfg.code}
+                      </span>
+                      <div className={`h-1 w-8 rounded-full ${cfg.barClass}`} />
+                      <span className="text-[11px] text-muted-foreground">
+                        {cfg.description.split("—")[0].trim()}
+                      </span>
                     </div>
                   )
                 })}
-              </CardContent>
-            </Card>
-
-            {/* Summary grid */}
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                {
-                  label: "Issues",
-                  icon: <AlertCircle className="h-5 w-5" />,
-                  count: results.violations.length,
-                  color: "text-destructive",
-                },
-                {
-                  label: "Needs Review",
-                  icon: <HelpCircle className="h-5 w-5" />,
-                  count: results.incomplete.length,
-                  color: "text-amber-500",
-                },
-                {
-                  label: "Passed",
-                  icon: <CheckCircle2 className="h-5 w-5" />,
-                  count: results.passes.length,
-                  color: "text-green-600",
-                },
-              ].map((card) => (
-                <Card key={card.label}>
-                  <CardContent className="pt-4 text-center">
-                    <div className={`mb-2 flex justify-center ${card.color}`}>
-                      {card.icon}
-                    </div>
-                    <p className="text-2xl font-bold text-foreground">
-                      {card.count}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {card.label}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
+              </div>
             </div>
 
-            {/* Sections */}
-            <div className="space-y-4">
+            {/* Issue sections */}
+            <div className="space-y-3">
               {results.violations.length > 0 && (
                 <Section
-                  title="Accessibility Issues"
+                  title="violations"
                   count={results.violations.length}
-                  icon={<AlertCircle className="h-4 w-4 text-destructive" />}
+                  prefix="ERR"
+                  accent="text-red-500 dark:text-red-400"
                   defaultOpen
                 >
                   {results.violations.map((issue) => {
@@ -549,9 +576,10 @@ export function App() {
 
               {results.incomplete.length > 0 && (
                 <Section
-                  title="Needs Review"
+                  title="needs review"
                   count={results.incomplete.length}
-                  icon={<HelpCircle className="h-4 w-4 text-amber-500" />}
+                  prefix="WRN"
+                  accent="text-amber-600 dark:text-amber-400"
                   defaultOpen
                 >
                   {results.incomplete.map((issue) => {
@@ -571,9 +599,10 @@ export function App() {
 
               {results.passes.length > 0 && (
                 <Section
-                  title="Passed Rules"
+                  title="passed rules"
                   count={results.passes.length}
-                  icon={<CheckCircle2 className="h-4 w-4 text-green-600" />}
+                  prefix="OK"
+                  accent="text-emerald-600 dark:text-emerald-400"
                   defaultOpen={false}
                 >
                   {results.passes.map((issue) => {
@@ -593,25 +622,22 @@ export function App() {
 
               {results.violations.length === 0 &&
                 results.incomplete.length === 0 && (
-                  <Card>
-                    <CardContent className="py-8 text-center">
-                      <CheckCircle2 className="mx-auto mb-3 h-12 w-12 text-green-500" />
-                      <h3 className="mb-1 font-semibold text-foreground">
-                        Great job!
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        No accessibility issues detected
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-8 text-center dark:border-emerald-900 dark:bg-emerald-950/30">
+                    <p className="mb-1 font-mono text-xs tracking-widest text-emerald-600 uppercase dark:text-emerald-400">
+                      ✓ audit clean
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      No accessibility violations detected.
+                    </p>
+                  </div>
                 )}
             </div>
           </>
         )}
 
         {!results && (
-          <p className="text-center text-sm text-muted-foreground">
-            Click the button above to scan this page for accessibility issues
+          <p className="py-4 text-center text-[11px] tracking-wide text-muted-foreground/40">
+            — run audit to inspect this page —
           </p>
         )}
       </div>
@@ -632,12 +658,10 @@ function IssueCard({ issue, type, isExpanded, onToggle }: IssueCardProps) {
   const impact = getImpact(issue.impact)
   const [activeSelector, setActiveSelector] = useState<string | null>(null)
 
-  const impactBadgeClass =
+  const codeColor =
     type === "passes"
-      ? "border-green-300 bg-green-50 text-green-700"
-      : impact.className
-  const impactLabel = type === "passes" ? "Passed" : impact.label
-  const showDot = type !== "passes"
+      ? "text-emerald-600 dark:text-emerald-400"
+      : impact.className.split(" ")[0]
 
   async function handleHighlight(selector: string) {
     if (activeSelector === selector) {
@@ -658,70 +682,75 @@ function IssueCard({ issue, type, isExpanded, onToggle }: IssueCardProps) {
   }
 
   return (
-    <Card className="overflow-hidden">
+    <div className="border-b border-border/60 last:border-0">
       <button
         onClick={handleToggle}
-        className="flex w-full items-start justify-between px-4 py-3 text-left transition-colors hover:bg-muted"
+        className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50"
       >
+        <span
+          className={`mt-0.5 shrink-0 font-mono text-[10px] font-bold ${codeColor}`}
+        >
+          {type === "passes" ? "OK" : impact.code}
+        </span>
+
         <div className="min-w-0 flex-1">
-          <p className="mb-1 text-sm font-semibold text-foreground">
+          <p className="mb-0.5 text-xs leading-snug font-semibold text-foreground">
             {issue.help}
           </p>
-          <p className="text-xs text-muted-foreground">{issue.description}</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <Badge
-              variant="outline"
-              className={`gap-1 text-xs font-medium ${impactBadgeClass}`}
-            >
-              {showDot && (
-                <span
-                  className={`h-1.5 w-1.5 rounded-full ${impact.dotClass}`}
-                />
-              )}
-              {impactLabel}
-            </Badge>
+          <p className="text-[11px] leading-relaxed text-muted-foreground">
+            {issue.description}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {type !== "passes" && (
+              <span
+                className={`rounded border px-1.5 py-0.5 font-mono text-[10px] ${impact.className}`}
+              >
+                {impact.label}
+              </span>
+            )}
             {issue.nodes.length > 0 && (
-              <Badge variant="secondary" className="text-xs">
+              <span className="rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                 {issue.nodes.length}{" "}
-                {issue.nodes.length === 1 ? "element" : "elements"}
-              </Badge>
+                {issue.nodes.length === 1 ? "node" : "nodes"}
+              </span>
             )}
             {issue.tags
               .filter((t) => t.startsWith("wcag") || t === "best-practice")
               .slice(0, 3)
               .map((tag) => (
-                <Badge
+                <span
                   key={tag}
-                  variant="outline"
-                  className="text-xs text-muted-foreground"
+                  className="rounded border border-border/60 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground/60"
                 >
                   {tag}
-                </Badge>
+                </span>
               ))}
           </div>
         </div>
-        <span className="mt-0.5 ml-2 text-lg leading-none text-muted-foreground">
+
+        <span className="mt-0.5 shrink-0 text-base leading-none text-muted-foreground/40">
           {isExpanded ? "−" : "+"}
         </span>
       </button>
 
       {isExpanded && (
-        <div className="space-y-4 border-t border-border bg-muted px-4 py-3">
+        <div className="space-y-4 bg-muted/20 px-4 pt-1 pb-4">
           <div>
-            <p className="mb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-              {type === "passes" ? "Why it passed" : "What to fix"}
+            <p className="mb-2 font-mono text-[10px] tracking-widest text-muted-foreground/60 uppercase">
+              {type === "passes" ? "why it passed" : "fix required"}
             </p>
-            <p className="rounded-md border border-border bg-card p-2 text-xs text-foreground">
+            <div className="rounded border border-border bg-muted/40 px-3 py-2 text-xs text-foreground">
               {issue.help}
-            </p>
+            </div>
           </div>
 
           {issue.nodes.length > 0 && (
             <div>
-              <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                {type === "passes"
-                  ? `Passing Elements (${issue.nodes.length})`
-                  : `Affected Elements (${issue.nodes.length})`}
+              <p className="mb-2 font-mono text-[10px] tracking-widest text-muted-foreground/60 uppercase">
+                {type === "passes" ? "passing elements" : "affected elements"}{" "}
+                <span className="text-muted-foreground/30">
+                  [{issue.nodes.length}]
+                </span>
               </p>
               <div className="space-y-3">
                 {issue.nodes.map((node, idx) => {
@@ -734,17 +763,15 @@ function IssueCard({ issue, type, isExpanded, onToggle }: IssueCardProps) {
                   return (
                     <div key={idx} className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-muted-foreground">
-                          Element {idx + 1}
+                        <span className="font-mono text-[10px] text-muted-foreground/40">
+                          node_{String(idx + 1).padStart(2, "0")}
                         </span>
                         {selector && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className={`h-6 gap-1.5 px-2 text-xs transition-colors ${
+                          <button
+                            className={`flex items-center gap-1 rounded border px-2 py-0.5 font-mono text-[10px] transition-colors ${
                               isHighlighted
-                                ? "border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
-                                : "text-muted-foreground hover:text-foreground"
+                                ? "border-red-300 bg-red-50 text-red-600 dark:border-red-800 dark:bg-red-950/50 dark:text-red-400"
+                                : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground"
                             }`}
                             onClick={(e) => {
                               e.stopPropagation()
@@ -753,24 +780,24 @@ function IssueCard({ issue, type, isExpanded, onToggle }: IssueCardProps) {
                           >
                             {isHighlighted ? (
                               <>
-                                <X className="h-3 w-3" />
-                                Clear
+                                <X className="h-2.5 w-2.5" />
+                                clear
                               </>
                             ) : (
                               <>
-                                <Crosshair className="h-3 w-3" />
-                                Highlight
+                                <Crosshair className="h-2.5 w-2.5" />
+                                highlight
                               </>
                             )}
-                          </Button>
+                          </button>
                         )}
                       </div>
 
                       <div
-                        className={`rounded-md border bg-card p-2 font-mono text-xs break-all text-foreground transition-all ${
+                        className={`rounded border px-3 py-2 font-mono text-[11px] leading-relaxed break-all transition-all ${
                           isHighlighted
-                            ? "border-red-400 ring-2 ring-red-200"
-                            : "border-border"
+                            ? "border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/20 dark:text-red-300"
+                            : "border-border bg-muted/40 text-muted-foreground"
                         }`}
                       >
                         {node.html}
@@ -791,14 +818,14 @@ function IssueCard({ issue, type, isExpanded, onToggle }: IssueCardProps) {
               href={issue.helpUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block text-xs font-medium text-primary underline underline-offset-4 hover:text-primary/80"
+              className="inline-flex items-center gap-1 font-mono text-[11px] text-amber-600 transition-colors hover:text-amber-500 dark:text-amber-500 dark:hover:text-amber-400"
             >
-              Learn more →
+              docs ›
             </a>
           )}
         </div>
       )}
-    </Card>
+    </div>
   )
 }
 
