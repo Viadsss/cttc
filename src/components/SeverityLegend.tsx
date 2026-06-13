@@ -15,11 +15,11 @@ export function SeverityLegend() {
           return (
             <div key={level} className="flex items-center gap-2">
               <span
-                className={`w-6 text-center font-mono text-[10px] font-bold ${cfg.className.split(" ")[0]}`}
+                className={`text-center font-mono text-[10px] font-bold ${cfg.className.split(" ")[0]}`}
               >
                 {cfg.code}
               </span>
-              <div className={`h-1 w-8 rounded-full ${cfg.barClass}`} />
+              <div className={`h-1 w-6 rounded-full ${cfg.barClass}`} />
               <span className="text-[11px] text-muted-foreground">
                 {cfg.description.split("—")[0].trim()}
               </span>

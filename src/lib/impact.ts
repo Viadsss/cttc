@@ -16,7 +16,7 @@ export interface ImpactConfig {
 export const IMPACT: Record<ImpactLevel, ImpactConfig> = {
   minor: {
     label: "MINOR",
-    code: "P4",
+    code: "MINOR",
     description: "Cosmetic — unlikely to block most users.",
     className:
       "text-sky-500 dark:text-sky-400 border-sky-300 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/40",
@@ -24,7 +24,7 @@ export const IMPACT: Record<ImpactLevel, ImpactConfig> = {
   },
   moderate: {
     label: "MODERATE",
-    code: "P3",
+    code: "MODERATE",
     description: "Affects some users — should be addressed.",
     className:
       "text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40",
@@ -32,7 +32,7 @@ export const IMPACT: Record<ImpactLevel, ImpactConfig> = {
   },
   serious: {
     label: "SERIOUS",
-    code: "P2",
+    code: "SERIOUS",
     description: "Hard to work around — impacts many users.",
     className:
       "text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/40",
@@ -40,7 +40,7 @@ export const IMPACT: Record<ImpactLevel, ImpactConfig> = {
   },
   critical: {
     label: "CRITICAL",
-    code: "P1",
+    code: "CRITICAL",
     description: "Blocks access entirely — fix immediately.",
     className:
       "text-red-600 dark:text-red-400 border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/40",
