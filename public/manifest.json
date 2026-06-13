@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
   "version": "1.0.0",
-  "name": "My Vite Extension",
+  "name": "AcessCheck",
   "side_panel": {
     "default_path": "index.html"
   },
   "action": {
-    "default_title": "Open My Extension"
+    "default_title": "AcessCheck"
   },
   "background": {
     "service_worker": "background.js"
