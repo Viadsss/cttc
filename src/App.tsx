@@ -8,6 +8,7 @@ import { ScorePanel } from "./components/ScorePanel"
 import { SeverityLegend } from "./components/SeverityLegend"
 import { IssuesList } from "./components/IssuesList"
 import { URL_FIXES } from "./fixes"
+import { computeScore, checkCompliance } from "./lib/score"
 
 export function App() {
   const [results, setResults] = useState<AxeResults | null>(null)
@@ -99,14 +100,8 @@ export function App() {
 
   // ── Derived state ─────────────────────────────────────────────────────────
 
-  const total = results
-    ? results.passes.length +
-      results.violations.length +
-      results.incomplete.length
-    : 0
-  const scorePercentage =
-    results && total > 0 ? Math.round((results.passes.length / total) * 100) : 0
-
+  const breakdown = results ? computeScore(results) : null
+  const compliance = results ? checkCompliance(results) : null
   const hasFix = currentTabUrl in URL_FIXES
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -122,7 +117,7 @@ export function App() {
           onClick={runScan}
         />
 
-        {results && (
+        {results && breakdown && compliance && (
           <>
             <MetaPanel results={results} />
 
@@ -135,7 +130,11 @@ export function App() {
               />
             )}
 
-            <ScorePanel results={results} scorePercentage={scorePercentage} />
+            <ScorePanel
+              results={results}
+              breakdown={breakdown}
+              compliance={compliance}
+            />
 
             <SeverityLegend />
 
