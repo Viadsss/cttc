@@ -24,10 +24,6 @@ export function MetaPanel({ results }: MetaPanelProps) {
           timeStyle: "medium",
         })}
       />
-      <DiagRow
-        label="engine"
-        value="axe-core · wcag2a wcag2aa wcag21aa wcag22aa"
-      />
     </div>
   )
 }

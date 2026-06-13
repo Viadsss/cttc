@@ -40,8 +40,8 @@ const IMPACT_COLORS: Record<string, string> = {
 
 const COMPLIANCE_CONFIG = {
   passed: {
-    label: "✓ meets wcag 2 aa",
-    note: "automated check — ~30–40% of criteria covered",
+    label: "✓ meets WCAG 2.2AA standards",
+    note: "this page meets the minimum accessibility standards for basic usability",
     className:
       "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400",
   },
@@ -52,7 +52,7 @@ const COMPLIANCE_CONFIG = {
       "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400",
   },
   failed: {
-    label: "✗ wcag 2 aa violations found",
+    label: "✗ WCAG 2.2AA violations found",
     note: "fix all A/AA violations to meet minimum requirements",
     className:
       "border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400",
@@ -105,7 +105,7 @@ export function ScorePanel({
                   content={
                     <ChartTooltipContent
                       hideLabel
-                      formatter={(v) => [`${v} / 100`, "Score"]}
+                      formatter={(v) => [`${v} / 100`]}
                     />
                   }
                 />
@@ -114,9 +114,6 @@ export function ScorePanel({
 
             <span className="font-mono text-xl font-bold text-amber-500 tabular-nums">
               {score}
-            </span>
-            <span className="font-mono text-[9px] tracking-widest text-muted-foreground/50 uppercase">
-              / 100
             </span>
 
             <button
