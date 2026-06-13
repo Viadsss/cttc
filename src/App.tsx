@@ -20,10 +20,10 @@ export function App() {
 
   // ── Scan ──────────────────────────────────────────────────────────────────
 
-  async function runScan() {
+  async function runScan(preserveFixes = false) {
     try {
       setLoading(true)
-      setFixesApplied(false)
+      if (!preserveFixes) setFixesApplied(false)
 
       const [tab] = await chrome.tabs.query({
         active: true,
@@ -90,7 +90,7 @@ export function App() {
         func: fixFn,
       })
       setFixesApplied(true)
-      await runScan()
+      await runScan(true)
     } catch (error) {
       console.error("Error applying fixes:", error)
     } finally {
@@ -114,7 +114,7 @@ export function App() {
         <ScanButton
           loading={loading}
           disabled={loading || applyingFixes}
-          onClick={runScan}
+          onClick={() => runScan()}
         />
 
         {results && breakdown && compliance && (
@@ -139,7 +139,11 @@ export function App() {
             <SeverityLegend />
 
             <IssuesList
-              results={results}
+              results={{
+                ...results,
+                passes: breakdown.cleanPasses,
+                incomplete: breakdown.cleanIncomplete,
+              }}
               expandedIssue={expandedIssue}
               onToggle={(key) =>
                 setExpandedIssue((prev) => (prev === key ? null : key))

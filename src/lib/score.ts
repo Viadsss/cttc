@@ -1,53 +1,75 @@
 import type { AxeResults, Result } from "axe-core"
 
-export const IMPACT_WEIGHTS: Record<string, number> = {
-  critical: 1.0,
-  serious: 0.5,
-  moderate: 0.25,
-  minor: 0.1,
-  unknown: 0.25,
+// Penalty deducted per violation by impact level
+export const IMPACT_PENALTIES: Record<string, number> = {
+  critical: 4,
+  serious: 3,
+  moderate: 2,
+  minor: 1,
+  unknown: 2,
 }
 
-function getWeight(impact?: string | null): number {
-  return IMPACT_WEIGHTS[impact ?? "unknown"] ?? 0.25
+function getPenalty(impact?: string | null): number {
+  return IMPACT_PENALTIES[impact ?? "unknown"] ?? 2
 }
 
 export interface ScoreBreakdown {
   passes: number
-  weightedViolations: number
-  weightedIncomplete: number
-  effectiveTotal: number
-  scorePercentage: number
+  totalPasses: number
+  violations: number
+  passRate: number
+  penalties: number
+  score: number
+  cleanPasses: Result[]
+  cleanIncomplete: Result[]
   violationsByImpact: Record<string, number>
   incompleteByImpact: Record<string, number>
 }
 
 export function computeScore(results: AxeResults): ScoreBreakdown {
-  const passes = results.passes.length
+  const violationIds = new Set(results.violations.map((v) => v.id))
+  const incompleteIds = new Set(results.incomplete.map((v) => v.id))
 
-  const weightedViolations = results.violations.reduce(
-    (sum, v) => sum + getWeight(v.impact),
+  const cleanPasses = results.passes.filter(
+    (p) => !violationIds.has(p.id) && !incompleteIds.has(p.id)
+  )
+
+  const cleanIncomplete = results.incomplete.filter(
+    (i) => !violationIds.has(i.id)
+  )
+
+  const passes = cleanPasses.length
+  const violations = results.violations.length
+
+  const passRate = passes + violations > 0 ? passes / (passes + violations) : 1
+
+  const violationPenalties = results.violations.reduce(
+    (sum, v) => sum + getPenalty(v.impact),
     0
   )
 
-  const weightedIncomplete = results.incomplete.reduce(
-    (sum, v) => sum + getWeight(v.impact) * 0.5,
+  const incompletePenalties = cleanIncomplete.reduce(
+    (sum, v) => sum + getPenalty(v.impact) * 0.5,
     0
   )
 
-  const effectiveTotal = passes + weightedViolations + weightedIncomplete
-  const scorePercentage =
-    effectiveTotal > 0 ? Math.round((passes / effectiveTotal) * 100) : 100
+  const penalties = violationPenalties + incompletePenalties
+
+  const raw = passRate * 100 - penalties
+  const score = Math.round(Math.max(0, Math.min(100, raw)))
 
   const violationsByImpact = groupByImpact(results.violations)
-  const incompleteByImpact = groupByImpact(results.incomplete)
+  const incompleteByImpact = groupByImpact(cleanIncomplete)
 
   return {
     passes,
-    weightedViolations,
-    weightedIncomplete,
-    effectiveTotal,
-    scorePercentage,
+    totalPasses: results.passes.length,
+    violations,
+    passRate,
+    penalties,
+    score,
+    cleanPasses,
+    cleanIncomplete,
     violationsByImpact,
     incompleteByImpact,
   }

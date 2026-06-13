@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog"
 import { StatTile } from "./StatTile"
 import type { ScoreBreakdown, ComplianceResult } from "@/lib/score"
-import { IMPACT_WEIGHTS } from "@/lib/score"
+import { IMPACT_PENALTIES } from "@/lib/score"
 
 interface ScorePanelProps {
   results: AxeResults
@@ -40,8 +40,8 @@ const IMPACT_COLORS: Record<string, string> = {
 
 const COMPLIANCE_CONFIG = {
   passed: {
-    label: "✓ meets wcag 2.2AA",
-    note: "This page meets the minimum accessibility standards required for basic usability.",
+    label: "✓ meets wcag 2 aa",
+    note: "automated check — ~30–40% of criteria covered",
     className:
       "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400",
   },
@@ -52,7 +52,7 @@ const COMPLIANCE_CONFIG = {
       "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400",
   },
   failed: {
-    label: "✗ wcag 2.2AA violations found",
+    label: "✗ wcag 2 aa violations found",
     note: "fix all A/AA violations to meet minimum requirements",
     className:
       "border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400",
@@ -66,9 +66,11 @@ export function ScorePanel({
 }: ScorePanelProps) {
   const [open, setOpen] = useState(false)
   const {
-    scorePercentage,
+    score,
     passes,
-    effectiveTotal,
+    violations,
+    passRate,
+    penalties,
     violationsByImpact,
     incompleteByImpact,
   } = breakdown
@@ -85,9 +87,9 @@ export function ScorePanel({
               className="h-20 w-20"
             >
               <RadialBarChart
-                data={[{ score: scorePercentage }]}
+                data={[{ score }]}
                 startAngle={90}
-                endAngle={90 - 360 * (scorePercentage / 100)}
+                endAngle={90 - 360 * (score / 100)}
                 innerRadius={30}
                 outerRadius={40}
                 barSize={8}
@@ -103,7 +105,7 @@ export function ScorePanel({
                   content={
                     <ChartTooltipContent
                       hideLabel
-                      formatter={(v) => [`${v}%`, "Score"]}
+                      formatter={(v) => [`${v} / 100`, "Score"]}
                     />
                   }
                 />
@@ -111,10 +113,10 @@ export function ScorePanel({
             </ChartContainer>
 
             <span className="font-mono text-xl font-bold text-amber-500 tabular-nums">
-              {scorePercentage}%
+              {score}
             </span>
             <span className="font-mono text-[9px] tracking-widest text-muted-foreground/50 uppercase">
-              score
+              / 100
             </span>
 
             <button
@@ -134,12 +136,12 @@ export function ScorePanel({
             />
             <StatTile
               label="review"
-              count={results.incomplete.length}
+              count={breakdown.cleanIncomplete.length}
               accent="text-amber-600 dark:text-amber-400"
             />
             <StatTile
               label="passed"
-              count={results.passes.length}
+              count={breakdown.passes}
               accent="text-emerald-600 dark:text-emerald-400"
             />
           </div>
@@ -176,27 +178,45 @@ export function ScorePanel({
             <div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-4 py-3">
               <div>
                 <p className="font-mono text-2xl font-bold text-amber-500 tabular-nums">
-                  {scorePercentage}%
+                  {score}
+                  <span className="ml-1 text-sm font-normal text-muted-foreground">
+                    / 100
+                  </span>
                 </p>
                 <p className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-                  weighted score
+                  final score
                 </p>
               </div>
-              <div className="text-right font-mono text-[11px] text-muted-foreground">
-                <p>{passes} passes</p>
-                <p>{effectiveTotal.toFixed(2)} effective total</p>
+              <div className="space-y-0.5 text-right font-mono text-[11px] text-muted-foreground">
+                <p>
+                  pass rate{" "}
+                  <span className="text-foreground">
+                    {(passRate * 100).toFixed(2)}%
+                  </span>
+                </p>
+                <p>
+                  {passes} / {passes + violations} rules
+                </p>
+                <p>
+                  penalties{" "}
+                  <span className="text-red-500 dark:text-red-400">
+                    −{penalties.toFixed(2)}
+                  </span>
+                </p>
               </div>
             </div>
 
-            {/* Passes */}
+            {/* Pass rate */}
             <div>
               <p className="mb-1.5 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-                passes
+                pass rate
               </p>
               <div className="flex items-center justify-between rounded border border-border bg-muted/30 px-3 py-2 font-mono text-xs">
-                <span className="text-foreground">passed rules</span>
+                <span className="text-foreground">
+                  {passes} passes / {passes + violations} total rules
+                </span>
                 <span className="text-emerald-600 dark:text-emerald-400">
-                  +{passes}
+                  {(passRate * 100).toFixed(2)}%
                 </span>
               </div>
             </div>
@@ -205,7 +225,7 @@ export function ScorePanel({
             {IMPACT_ORDER.some((lvl) => violationsByImpact[lvl]) && (
               <div>
                 <p className="mb-1.5 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-                  violations
+                  violation penalties
                 </p>
                 <div className="divide-y divide-border/60 overflow-hidden rounded border border-border">
                   {IMPACT_ORDER.filter((lvl) => violationsByImpact[lvl]).map(
@@ -217,7 +237,7 @@ export function ScorePanel({
                         <span className="text-foreground capitalize">
                           {lvl}
                           <span className="ml-1.5 text-muted-foreground">
-                            ×{IMPACT_WEIGHTS[lvl]}
+                            ×{IMPACT_PENALTIES[lvl]}
                           </span>
                         </span>
                         <div className="flex items-center gap-3">
@@ -229,7 +249,7 @@ export function ScorePanel({
                           >
                             −
                             {(
-                              violationsByImpact[lvl] * IMPACT_WEIGHTS[lvl]
+                              violationsByImpact[lvl] * IMPACT_PENALTIES[lvl]
                             ).toFixed(2)}
                           </span>
                         </div>
@@ -244,9 +264,9 @@ export function ScorePanel({
             {IMPACT_ORDER.some((lvl) => incompleteByImpact[lvl]) && (
               <div>
                 <p className="mb-1.5 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-                  needs review{" "}
+                  review penalties{" "}
                   <span className="text-muted-foreground/60">
-                    (×0.5 penalty)
+                    (half penalty)
                   </span>
                 </p>
                 <div className="divide-y divide-border/60 overflow-hidden rounded border border-border">
@@ -259,7 +279,7 @@ export function ScorePanel({
                         <span className="text-foreground capitalize">
                           {lvl}
                           <span className="ml-1.5 text-muted-foreground">
-                            ×{IMPACT_WEIGHTS[lvl] * 0.5}
+                            ×{(IMPACT_PENALTIES[lvl] * 0.5).toFixed(2)}
                           </span>
                         </span>
                         <div className="flex items-center gap-3">
@@ -272,7 +292,7 @@ export function ScorePanel({
                             −
                             {(
                               incompleteByImpact[lvl] *
-                              IMPACT_WEIGHTS[lvl] *
+                              IMPACT_PENALTIES[lvl] *
                               0.5
                             ).toFixed(2)}
                           </span>
@@ -289,32 +309,38 @@ export function ScorePanel({
               <p className="mb-2 text-[10px] tracking-widest text-muted-foreground uppercase">
                 formula
               </p>
-              <div className="flex flex-col items-center gap-1 py-1">
+
+              {/* Pass rate fraction */}
+              <div className="mb-2 flex flex-col items-center gap-0.5 py-1 text-xs">
                 <span className="text-foreground">passes</span>
                 <div className="w-full border-t border-border" />
-                <span className="text-center leading-relaxed text-muted-foreground">
-                  passes + Σ violation×weight
-                  <br />+ Σ incomplete×weight×0.5
+                <span className="text-muted-foreground">
+                  (passes + violations)
                 </span>
+              </div>
+
+              {/* Combined formula */}
+              <div className="rounded border border-border/60 bg-muted/30 px-2 py-1.5 text-[10px] leading-relaxed text-muted-foreground">
+                score = clamp(passRate × 100 − penalties, 0, 100)
               </div>
 
               <div className="mt-3 border-t border-border pt-2.5">
                 <p className="mb-2 text-[10px] tracking-widest text-muted-foreground uppercase">
-                  weights
+                  penalty weights
                 </p>
                 <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground capitalize">
                       critical
                     </span>
-                    <span className="text-red-500 dark:text-red-400">1.0</span>
+                    <span className="text-red-500 dark:text-red-400">−4</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground capitalize">
                       serious
                     </span>
                     <span className="text-orange-500 dark:text-orange-400">
-                      0.5
+                      −3
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -322,14 +348,14 @@ export function ScorePanel({
                       moderate
                     </span>
                     <span className="text-amber-600 dark:text-amber-400">
-                      0.25
+                      −2
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground capitalize">
                       minor
                     </span>
-                    <span className="text-sky-500 dark:text-sky-400">0.1</span>
+                    <span className="text-sky-500 dark:text-sky-400">−1</span>
                   </div>
                 </div>
               </div>
