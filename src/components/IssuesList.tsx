@@ -87,6 +87,29 @@ export function IssuesList({
         </Section>
       )}
 
+      {results.inapplicable.length > 0 && (
+        <Section
+          title="not applicable"
+          count={results.inapplicable.length}
+          prefix="N/A"
+          accent="text-muted-foreground/60"
+          defaultOpen={false}
+        >
+          {results.inapplicable.map((issue) => {
+            const key = `inapplicable-${issue.id}`
+            return (
+              <IssueCard
+                key={issue.id}
+                issue={issue}
+                type="inapplicable"
+                isExpanded={expandedIssue === key}
+                onToggle={() => onToggle(key)}
+              />
+            )
+          })}
+        </Section>
+      )}
+
       {isClean && (
         <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-8 text-center dark:border-emerald-900 dark:bg-emerald-950/30">
           <p className="mb-1 font-mono text-xs tracking-widest text-emerald-600 uppercase dark:text-emerald-400">

@@ -79,7 +79,7 @@ export function ScorePanel({
   return (
     <>
       <div className="space-y-3">
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           {/* Score tile */}
           <div className="col-span-1 flex flex-col items-center justify-center gap-1 rounded-lg border border-border bg-muted/40 px-2 py-3">
             <ChartContainer
@@ -125,7 +125,7 @@ export function ScorePanel({
           </div>
 
           {/* Stat tiles */}
-          <div className="col-span-3 grid grid-cols-3 gap-3">
+          <div className="col-span-2 grid grid-cols-2 gap-3">
             <StatTile
               label="issues"
               count={results.violations.length}
@@ -140,6 +140,11 @@ export function ScorePanel({
               label="passed"
               count={breakdown.passes}
               accent="text-emerald-600 dark:text-emerald-400"
+            />
+            <StatTile
+              label="n/a"
+              count={results.inapplicable.length}
+              accent="text-muted-foreground/60"
             />
           </div>
         </div>

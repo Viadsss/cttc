@@ -7,7 +7,7 @@ import { FailureSummary } from "./FailureSummary"
 
 export interface IssueCardProps {
   issue: Result
-  type: "violations" | "incomplete" | "passes"
+  type: "violations" | "incomplete" | "passes" | "inapplicable"
   isExpanded: boolean
   onToggle: () => void
 }
@@ -24,7 +24,9 @@ export function IssueCard({
   const codeColor =
     type === "passes"
       ? "text-emerald-600 dark:text-emerald-400"
-      : impact.className.split(" ")[0]
+      : type === "inapplicable"
+        ? "text-muted-foreground/60"
+        : impact.className.split(" ")[0]
 
   async function handleHighlight(selector: string) {
     if (activeSelector === selector) {
@@ -54,7 +56,11 @@ export function IssueCard({
         <span
           className={`mt-0.5 shrink-0 font-mono text-[10px] font-bold ${codeColor}`}
         >
-          {type === "passes" ? "OK" : impact.code}
+          {type === "passes"
+            ? "OK"
+            : type === "inapplicable"
+              ? "N/A"
+              : impact.code}
         </span>
 
         <div className="min-w-0 flex-1">
@@ -65,7 +71,7 @@ export function IssueCard({
             {issue.description}
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5">
-            {type !== "passes" && (
+            {type !== "passes" && type !== "inapplicable" && (
               <span
                 className={`rounded border px-1.5 py-0.5 font-mono text-[10px] ${impact.className}`}
               >
@@ -103,7 +109,11 @@ export function IssueCard({
           {/* Fix / pass reason */}
           <div>
             <p className="mb-2 font-mono text-[10px] tracking-widest text-muted-foreground/60 uppercase">
-              {type === "passes" ? "why it passed" : "fix required"}
+              {type === "passes"
+                ? "why it passed"
+                : type === "inapplicable"
+                  ? "why it doesn't apply"
+                  : "fix required"}
             </p>
             <div className="rounded border border-border bg-muted/40 px-3 py-2 text-xs text-foreground">
               {issue.help}
@@ -114,7 +124,11 @@ export function IssueCard({
           {issue.nodes.length > 0 && (
             <div>
               <p className="mb-2 font-mono text-[10px] tracking-widest text-muted-foreground/60 uppercase">
-                {type === "passes" ? "passing elements" : "affected elements"}{" "}
+                {type === "passes"
+                  ? "passing elements"
+                  : type === "inapplicable"
+                    ? "matched elements"
+                    : "affected elements"}{" "}
                 <span className="text-muted-foreground/30">
                   [{issue.nodes.length}]
                 </span>
