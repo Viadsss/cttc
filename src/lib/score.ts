@@ -85,7 +85,7 @@ function groupByImpact(issues: Result[]): Record<string, number> {
 
 // ── WCAG minimum compliance ──────────────────────────────────────────────────
 
-const MINIMUM_TAGS = new Set(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+const MINIMUM_TAGS = new Set(["wcag2a", "wcag21aa"])
 
 function isMinimumLevel(issue: Result): boolean {
   return issue.tags.some((tag) => MINIMUM_TAGS.has(tag))

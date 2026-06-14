@@ -41,20 +41,20 @@ const IMPACT_COLORS: Record<string, string> = {
 
 const COMPLIANCE_CONFIG = {
   passed: {
-    label: "✓ meets WCAG 2.2AA standards",
-    note: "this page meets the minimum accessibility standards for basic usability",
+    label: "✓ meets WCAG 2.2A standards",
+    note: "this page meets the minimum Level A accessibility standards for basic usability",
     className:
       "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400",
   },
   unverified: {
     label: "⚠ needs manual review",
-    note: "no violations found, but incomplete items require human review",
+    note: "no Level A violations found, but incomplete items require human review",
     className:
       "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400",
   },
   failed: {
-    label: "✗ WCAG 2.2AA violations found",
-    note: "fix all A/AA violations to meet minimum requirements",
+    label: "✗ WCAG 2.2A violations found",
+    note: "fix all Level A violations to meet minimum requirements",
     className:
       "border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400",
   },
@@ -159,7 +159,7 @@ export function ScorePanel({
           </p>
           <p className="mt-0.5 font-mono text-[11px] opacity-85">
             {compliance.status === "failed"
-              ? `${compliance.minimumViolationCount} wcag a/aa violation${compliance.minimumViolationCount !== 1 ? "s" : ""} · fix these first`
+              ? `${compliance.minimumViolationCount} wcag level a violation${compliance.minimumViolationCount !== 1 ? "s" : ""} · fix these first`
               : compliance.status === "unverified"
                 ? `${compliance.minimumIncompleteCount} item${compliance.minimumIncompleteCount !== 1 ? "s" : ""} need manual review`
                 : complianceCfg.note}
