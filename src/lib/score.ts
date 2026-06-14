@@ -85,7 +85,7 @@ function groupByImpact(issues: Result[]): Record<string, number> {
 
 // ── WCAG minimum compliance ──────────────────────────────────────────────────
 
-const MINIMUM_TAGS = new Set(["wcag2a", "wcag21aa"])
+const MINIMUM_TAGS = new Set(["wcag2a", "wcag21a"])
 
 function isMinimumLevel(issue: Result): boolean {
   return issue.tags.some((tag) => MINIMUM_TAGS.has(tag))
@@ -117,4 +117,45 @@ export function checkCompliance(results: AxeResults): ComplianceResult {
     minimumViolationCount: minimumViolations.length,
     minimumIncompleteCount: minimumIncomplete.length,
   }
+}
+
+// ── Conformance level ────────────────────────────────────────────────────────
+
+export type ConformanceLevel = "A" | "AA" | "AAA"
+
+const RULE_LEVEL_TAGS: Record<string, ConformanceLevel> = {
+  wcag2a: "A",
+  wcag21a: "A",
+  wcag2aa: "AA",
+  wcag21aa: "AA",
+  wcag22aa: "AA",
+  wcag2aaa: "AAA",
+}
+
+const LEVEL_ORDER: ConformanceLevel[] = ["A", "AA", "AAA"]
+
+export function getRuleLevel(tags: string[]): ConformanceLevel | null {
+  for (const level of LEVEL_ORDER) {
+    if (tags.some((tag) => RULE_LEVEL_TAGS[tag] === level)) {
+      return level
+    }
+  }
+  return null
+}
+
+export function getConformanceLevelViolation(
+  violations: Result[]
+): ConformanceLevel | "None" {
+  let lowest: ConformanceLevel | null = null
+
+  for (const violation of violations) {
+    const level = getRuleLevel(violation.tags)
+    if (!level) continue
+
+    if (!lowest || LEVEL_ORDER.indexOf(level) < LEVEL_ORDER.indexOf(lowest)) {
+      lowest = level
+    }
+  }
+
+  return lowest ?? "None"
 }

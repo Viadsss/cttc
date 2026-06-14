@@ -1,5 +1,6 @@
 import type { AxeResults, Result } from "axe-core"
 import type { ComplianceResult } from "./score"
+import { getRuleLevel, getConformanceLevelViolation } from "./score"
 
 const BOM = "\uFEFF"
 
@@ -34,6 +35,7 @@ function buildSummaryCSV(
     "Scan Date",
     "Score",
     "Meets Minimum Standard",
+    "Conformance Level Violation",
     "Violations",
     "Incomplete",
     "Passes",
@@ -45,6 +47,7 @@ function buildSummaryCSV(
     new Date(results.timestamp).toLocaleString(),
     String(score),
     compliance.status,
+    getConformanceLevelViolation(results.violations),
     String(results.violations.length),
     String(results.incomplete.length),
     String(results.passes.length),
@@ -60,8 +63,9 @@ function buildRulesCSV(results: AxeResults): string {
   const passIds = new Set(results.passes.map((r) => r.id))
   const inapplicableIds = new Set(results.inapplicable.map((r) => r.id))
 
-  // Build id → help lookup from all four buckets
+  // Build id → help and id → level lookups from all four buckets
   const helpMap = new Map<string, string>()
+  const levelMap = new Map<string, string>()
   const allResults: Result[] = [
     ...results.violations,
     ...results.incomplete,
@@ -70,6 +74,7 @@ function buildRulesCSV(results: AxeResults): string {
   ]
   for (const r of allResults) {
     if (!helpMap.has(r.id)) helpMap.set(r.id, r.help)
+    if (!levelMap.has(r.id)) levelMap.set(r.id, getRuleLevel(r.tags) ?? "")
   }
 
   const allIds = Array.from(
@@ -79,6 +84,7 @@ function buildRulesCSV(results: AxeResults): string {
   const header = row(
     "id",
     "description",
+    "level",
     "passes",
     "violations",
     "incomplete",
@@ -89,6 +95,7 @@ function buildRulesCSV(results: AxeResults): string {
     row(
       id,
       helpMap.get(id) ?? "",
+      levelMap.get(id) ?? "",
       passIds.has(id) ? "✓" : "",
       violationIds.has(id) ? "✓" : "",
       incompleteIds.has(id) ? "✓" : "",
@@ -98,6 +105,7 @@ function buildRulesCSV(results: AxeResults): string {
 
   const totalRow = row(
     "TOTAL",
+    "",
     "",
     String(results.passes.length),
     String(results.violations.length),
