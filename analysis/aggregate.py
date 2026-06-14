@@ -256,40 +256,62 @@ def rule_level_aggregation(rules: pd.DataFrame, n_pages: int) -> pd.DataFrame:
 def chart_rule_level_aggregation(df: pd.DataFrame) -> None:
     plot_df = df[df["id"] != "TOTAL"].copy()
     plot_df["issues"] = plot_df["violations"] + plot_df["incomplete"]
-    plot_df = plot_df.sort_values("issues", ascending=True)
+    plot_df = plot_df.sort_values("violations", ascending=True)
 
-    labels      = plot_df["id"].tolist()
-    passes      = plot_df["passes"].tolist()
-    violations  = plot_df["violations"].tolist()
-    incomplete  = plot_df["incomplete"].tolist()
-    inapplicable= plot_df["inapplicable"].tolist()
+    labels       = plot_df["id"].tolist()
+    passes       = plot_df["passes"].tolist()
+    violations   = plot_df["violations"].tolist()
+    incomplete   = plot_df["incomplete"].tolist()
+    inapplicable = plot_df["inapplicable"].tolist()
 
-    y = np.arange(len(labels))
+    n = len(labels)
+    y = np.arange(n)
     height = 0.6
 
     cycle_colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 
-    fig, ax = plt.subplots(figsize=(10, max(5, len(labels) * 0.45)))
+    fig, ax = plt.subplots(figsize=(10, n * 0.45))  # no max(5, ...) so it fits tightly
 
-    bars = [
-        (passes,        cycle_colors[0], "Passes"),
-        (violations,    cycle_colors[1], "Violations"),
-        (incomplete,    cycle_colors[2], "Incomplete"),
-        (inapplicable,  cycle_colors[3], "Inapplicable"),
+    bars_def = [
+        (passes,        cycle_colors[2], "Passes"),
+        (violations,    cycle_colors[3], "Violations"),
+        (incomplete,    cycle_colors[1], "Incomplete"),
+        (inapplicable,  cycle_colors[0], "Inapplicable"),
     ]
 
-    left = np.zeros(len(labels))
-    for values, color, label in bars:
+    left = np.zeros(n)
+    for values, color, label in bars_def:
         ax.barh(y, values, height=height, left=left,
                 color=color, label=label, linewidth=0)
+        # add number label inside each segment if wide enough
+        for i, (val, l) in enumerate(zip(values, left)):
+            if val > 0:
+                ax.text(
+                    l + val / 2, i, str(val),
+                    ha="center", va="center",
+                    fontsize=10, fontweight="bold",
+                    color="white",
+                )
         left += np.array(values)
 
     ax.set_yticks(y)
     ax.set_yticklabels(labels, fontsize=9)
     ax.set_xlabel("Number of Pages", fontsize=11)
-    ax.set_title("Rule-Level Aggregation\n(sorted by issues)", fontsize=13,
-                 fontweight="bold", pad=12)
-    ax.legend(loc="lower right", frameon=False, fontsize=10)
+
+    ax.set_ylim(-0.5, n - 0.5)  # remove bottom whitespace
+
+    ax.set_title("Rule-Level Aggregation\n(sorted by violations)", fontsize=13,
+                 fontweight="bold", pad=24)  # pad makes room for legend
+
+    ax.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, 1.0125),
+        ncol=4,
+        frameon=False,
+        fontsize=10,
+        bbox_transform=ax.transAxes,
+    )
+
     ax.spines["left"].set_visible(False)
     ax.tick_params(left=False)
 
