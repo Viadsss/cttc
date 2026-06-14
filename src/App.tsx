@@ -1,5 +1,6 @@
 import { useState } from "react"
 import type { AxeResults, RunOptions } from "axe-core"
+import { FileDown } from "lucide-react"
 import { AppHeader } from "./components/AppHeader"
 import { ScanButton } from "./components/ScanButton"
 import { MetaPanel } from "./components/MetaPanel"
@@ -9,6 +10,7 @@ import { SeverityLegend } from "./components/SeverityLegend"
 import { IssuesList } from "./components/IssuesList"
 import { URL_FIXES } from "./fixes"
 import { computeScore, checkCompliance } from "./lib/score"
+import { exportCSV } from "./lib/csv"
 
 export function App() {
   const [results, setResults] = useState<AxeResults | null>(null)
@@ -111,11 +113,23 @@ export function App() {
       <div className="mx-auto max-w-2xl space-y-5">
         <AppHeader />
 
-        <ScanButton
-          loading={loading}
-          disabled={loading || applyingFixes}
-          onClick={() => runScan()}
-        />
+        <div className="flex gap-2">
+          <ScanButton
+            loading={loading}
+            disabled={loading || applyingFixes}
+            onClick={() => runScan()}
+          />
+          {results && breakdown && compliance && (
+            <button
+              onClick={() => exportCSV(results, breakdown.score, compliance)}
+              title="Export CSV report"
+              className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-border bg-muted/50 px-4 text-sm font-bold tracking-[0.15em] text-foreground uppercase transition-all hover:border-foreground/20 hover:bg-muted"
+            >
+              <FileDown className="h-3.5 w-3.5" />
+              csv
+            </button>
+          )}
+        </div>
 
         {results && breakdown && compliance && (
           <>
