@@ -134,12 +134,12 @@ export function ScorePanel({
             />
             <StatTile
               label="review"
-              count={breakdown.cleanIncomplete.length}
+              count={results.incomplete.length}
               accent="text-amber-600 dark:text-amber-400"
             />
             <StatTile
               label="passed"
-              count={breakdown.passes}
+              count={results.passes.length}
               accent="text-emerald-600 dark:text-emerald-400"
             />
             <StatTile

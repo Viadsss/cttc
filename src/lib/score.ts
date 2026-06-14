@@ -1,6 +1,5 @@
 import type { AxeResults, Result } from "axe-core"
 
-// Penalty deducted per violation by impact level
 export const IMPACT_PENALTIES: Record<string, number> = {
   critical: 4,
   serious: 2,
@@ -20,25 +19,12 @@ export interface ScoreBreakdown {
   passRate: number
   penalties: number
   score: number
-  cleanPasses: Result[]
-  cleanIncomplete: Result[]
   violationsByImpact: Record<string, number>
   incompleteByImpact: Record<string, number>
 }
 
 export function computeScore(results: AxeResults): ScoreBreakdown {
-  const violationIds = new Set(results.violations.map((v) => v.id))
-  const incompleteIds = new Set(results.incomplete.map((v) => v.id))
-
-  const cleanPasses = results.passes.filter(
-    (p) => !violationIds.has(p.id) && !incompleteIds.has(p.id)
-  )
-
-  const cleanIncomplete = results.incomplete.filter(
-    (i) => !violationIds.has(i.id)
-  )
-
-  const passes = cleanPasses.length
+  const passes = results.passes.length
   const violations = results.violations.length
 
   const passRate = passes + violations > 0 ? passes / (passes + violations) : 1
@@ -48,7 +34,7 @@ export function computeScore(results: AxeResults): ScoreBreakdown {
     0
   )
 
-  const incompletePenalties = cleanIncomplete.reduce(
+  const incompletePenalties = results.incomplete.reduce(
     (sum, v) => sum + getPenalty(v.impact) * 0.5,
     0
   )
@@ -59,7 +45,7 @@ export function computeScore(results: AxeResults): ScoreBreakdown {
   const score = Math.round(Math.max(0, Math.min(100, raw)))
 
   const violationsByImpact = groupByImpact(results.violations)
-  const incompleteByImpact = groupByImpact(cleanIncomplete)
+  const incompleteByImpact = groupByImpact(results.incomplete)
 
   return {
     passes,
@@ -68,8 +54,6 @@ export function computeScore(results: AxeResults): ScoreBreakdown {
     passRate,
     penalties,
     score,
-    cleanPasses,
-    cleanIncomplete,
     violationsByImpact,
     incompleteByImpact,
   }
@@ -82,8 +66,6 @@ function groupByImpact(issues: Result[]): Record<string, number> {
     return acc
   }, {})
 }
-
-// ── WCAG minimum compliance ──────────────────────────────────────────────────
 
 const MINIMUM_TAGS = new Set(["wcag2a", "wcag21a"])
 
@@ -118,8 +100,6 @@ export function checkCompliance(results: AxeResults): ComplianceResult {
     minimumIncompleteCount: minimumIncomplete.length,
   }
 }
-
-// ── Conformance level ────────────────────────────────────────────────────────
 
 export type ConformanceLevel = "A" | "AA" | "AAA"
 

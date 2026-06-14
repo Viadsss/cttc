@@ -11,6 +11,7 @@ import { IssuesList } from "./components/IssuesList"
 import { URL_FIXES } from "./fixes"
 import { computeScore, checkCompliance } from "./lib/score"
 import { exportCSV } from "./lib/csv"
+import { cleanResults } from "./lib/results"
 
 export function App() {
   const [results, setResults] = useState<AxeResults | null>(null)
@@ -19,8 +20,6 @@ export function App() {
   const [fixesApplied, setFixesApplied] = useState(false)
   const [expandedIssue, setExpandedIssue] = useState<string | null>(null)
   const [currentTabUrl, setCurrentTabUrl] = useState("")
-
-  // ── Scan ──────────────────────────────────────────────────────────────────
 
   async function runScan(preserveFixes = false) {
     try {
@@ -65,15 +64,13 @@ export function App() {
           }),
       })
 
-      setResults(injectionResults[0].result as AxeResults)
+      setResults(cleanResults(injectionResults[0].result as AxeResults))
     } catch (error) {
       console.error("Error running accessibility check:", error)
     } finally {
       setLoading(false)
     }
   }
-
-  // ── Apply fixes ───────────────────────────────────────────────────────────
 
   async function handleApplyFixes() {
     try {
@@ -100,13 +97,9 @@ export function App() {
     }
   }
 
-  // ── Derived state ─────────────────────────────────────────────────────────
-
   const breakdown = results ? computeScore(results) : null
   const compliance = results ? checkCompliance(results) : null
   const hasFix = currentTabUrl in URL_FIXES
-
-  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-background p-4 font-mono text-foreground">
@@ -153,11 +146,7 @@ export function App() {
             <SeverityLegend />
 
             <IssuesList
-              results={{
-                ...results,
-                passes: breakdown.cleanPasses,
-                incomplete: breakdown.cleanIncomplete,
-              }}
+              results={results}
               expandedIssue={expandedIssue}
               onToggle={(key) =>
                 setExpandedIssue((prev) => (prev === key ? null : key))

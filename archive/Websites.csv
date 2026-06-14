@@ -1,26 +1,26 @@
-#,National Government Agency (NGA),Primary Evaluation URL,Score,Passed?
-1,Department of Foreign Affairs (DFA),https://passport.gov.ph/appointment/individual/site,54,No (5)
-2,Philippine Statistics Authority (PSA),https://www.psaserbilis.com.ph/BirthCertificate,74,No (1)
-3,PSA - Philippine Identification System (PhilSys),https://philsys.gov.ph,93,No (1)
-4,Bureau of Internal Revenue (BIR),https://www.bir.gov.ph/eServices,66,No (3)
-5,Department of Trade and Industry (DTI),https://bnrs.dti.gov.ph/search,61,No (4)
-6,Bureau of Customs (BOC),https://customs.gov.ph,81,No (2)
-7,Bureau of the Treasury (BTr),https://www.treasury.gov.ph,64,No (4)
-8,Social Security System (SSS),https://member.sss.gov.ph/member/pbl/register/exec,77,No (1)
-9,Philippine Health Insurance Corp. (PhilHealth),https://www.philhealth.gov.ph,86,Yes
-10,Pag-IBIG Fund (HDMF),https://www.pagibigfundservices.com/OnlineMembershipRegistration,64,No (4)
-11,Professional Regulation Commission (PRC),https://online.prc.gov.ph,44,No (6)
-12,Department of Migrant Workers (DMW),https://dmw.gov.ph,66,No (2)
-25,DOST - Science Education Institute (DOST-SEI),https://science-scholarships.ph/Downloads,99,Yes
-14,Civil Service Commission (CSC),https://csc.gov.ph,61,No (4)
-15,Land Transportation Franchising Regulatory Board (LTFRB),https://ltfrb.gov.ph,73,No (2)
-16,Bureau of Immigration (BI),https://immigration.gov.ph,80,No (1)
-17,National Bureau of Investigation (NBI),https://clearance.nbi.gov.ph,49,No (4)
-18,Philippine National Police (PNP),https://pnpclearance.ph,90,Yes
-19,National Telecommunications Commission (NTC),https://ntc.gov.ph,72,No (3)
-20,Environmental Management Bureau (EMB),https://iis.emb.gov.ph,89,Yes
-21,Department of Information and Communications Tech (DICT),https://e.gov.ph,87,Yes
-22,Anti-Red Tape Authority (ARTA),https://business.gov.ph/signup,60,No (4)
-23,Department of Science and Technology (DOST - Central),https://www.dost.gov.ph,59,No (5)
-24,DOST - Science Education Institute (DOST-SEI),https://www.sei.dost.gov.ph/sei-today,78,No (2)
-25,Philippine News Agency (PNA),https://www.pna.gov.ph/,82,No (2)
+#,National Government Agency (NGA),Primary Evaluation URL
+1,Department of Foreign Affairs (DFA),https://passport.gov.ph/appointment/individual/site
+2,Philippine Statistics Authority (PSA),https://www.psaserbilis.com.ph/BirthCertificate
+3,PSA - Philippine Identification System (PhilSys),https://philsys.gov.ph
+4,Bureau of Internal Revenue (BIR),https://www.bir.gov.ph/eServices
+5,Department of Trade and Industry (DTI),https://bnrs.dti.gov.ph/search
+6,Bureau of Customs (BOC),https://customs.gov.ph
+7,Bureau of the Treasury (BTr),https://www.treasury.gov.ph
+8,Social Security System (SSS),https://member.sss.gov.ph/member/pbl/register/exec
+9,Philippine Health Insurance Corp. (PhilHealth),https://www.philhealth.gov.ph
+10,Pag-IBIG Fund (HDMF),https://www.pagibigfundservices.com/OnlineMembershipRegistration
+11,Professional Regulation Commission (PRC),https://online.prc.gov.ph
+12,Department of Migrant Workers (DMW),https://dmw.gov.ph
+25,DOST - Science Education Institute (DOST-SEI),https://science-scholarships.ph/Downloads
+14,Civil Service Commission (CSC),https://csc.gov.ph
+15,Land Transportation Franchising Regulatory Board (LTFRB),https://ltfrb.gov.ph
+16,Bureau of Immigration (BI),https://immigration.gov.ph
+17,National Bureau of Investigation (NBI),https://clearance.nbi.gov.ph
+18,Philippine National Police (PNP),https://pnpclearance.ph/register
+19,National Telecommunications Commission (NTC),https://ntc.gov.ph
+20,Environmental Management Bureau (EMB),https://iis.emb.gov.ph
+21,Department of Information and Communications Tech (DICT),https://e.gov.ph
+22,Anti-Red Tape Authority (ARTA),https://business.gov.ph/signup
+23,Department of Science and Technology (DOST - Central),https://www.dost.gov.ph
+24,DOST - Science Education Institute (DOST-SEI),https://www.sei.dost.gov.ph/sei-today
+25,Philippine News Agency (PNA),https://www.pna.gov.ph/
