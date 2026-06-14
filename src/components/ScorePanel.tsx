@@ -319,17 +319,14 @@ export function ScorePanel({
                   <br />D = total penalty score
                 </div>
 
-                {/* Pass rate formula */}
                 <div className="rounded border border-border/60 bg-muted/30 px-2 py-1.5 text-[11px] leading-relaxed text-muted-foreground">
                   P = passes / total checks
                 </div>
 
-                {/* Score formula */}
                 <div className="rounded border border-border/60 bg-muted/30 px-2 py-1.5 text-[11px] leading-relaxed text-muted-foreground">
                   S = (P * 100) - D
                 </div>
 
-                {/* Constraint note */}
                 <div className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
                   S ∈ [0, 100], where values below 0 are set to 0 and values
                   above 100 are set to 100
@@ -339,39 +336,22 @@ export function ScorePanel({
                   <p className="mb-2 text-[11px] tracking-widest text-muted-foreground uppercase">
                     penalty weights
                   </p>
-
                   <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground capitalize">
-                        critical
-                      </span>
-                      <span className="text-red-500 dark:text-red-400">−4</span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground capitalize">
-                        serious
-                      </span>
-                      <span className="text-orange-500 dark:text-orange-400">
-                        −3
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground capitalize">
-                        moderate
-                      </span>
-                      <span className="text-amber-600 dark:text-amber-400">
-                        −2
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground capitalize">
-                        minor
-                      </span>
-                      <span className="text-sky-500 dark:text-sky-400">−1</span>
-                    </div>
+                    {IMPACT_ORDER.filter((lvl) => lvl !== "unknown").map(
+                      (lvl) => (
+                        <div
+                          key={lvl}
+                          className="flex items-center justify-between"
+                        >
+                          <span className="text-muted-foreground capitalize">
+                            {lvl}
+                          </span>
+                          <span className={IMPACT_COLORS[lvl]}>
+                            −{IMPACT_PENALTIES[lvl]}
+                          </span>
+                        </div>
+                      )
+                    )}
                   </div>
                 </div>
               </div>

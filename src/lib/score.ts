@@ -3,14 +3,14 @@ import type { AxeResults, Result } from "axe-core"
 // Penalty deducted per violation by impact level
 export const IMPACT_PENALTIES: Record<string, number> = {
   critical: 4,
-  serious: 3,
-  moderate: 2,
-  minor: 1,
-  unknown: 2,
+  serious: 2,
+  moderate: 1,
+  minor: 0.5,
+  unknown: 1,
 }
 
 function getPenalty(impact?: string | null): number {
-  return IMPACT_PENALTIES[impact ?? "unknown"] ?? 2
+  return IMPACT_PENALTIES[impact ?? "unknown"] ?? 1
 }
 
 export interface ScoreBreakdown {
