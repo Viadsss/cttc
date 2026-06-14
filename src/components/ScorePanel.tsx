@@ -15,6 +15,7 @@ import {
 import { StatTile } from "./StatTile"
 import type { ScoreBreakdown, ComplianceResult } from "@/lib/score"
 import { IMPACT_PENALTIES } from "@/lib/score"
+import { ScrollArea } from "./ui/scroll-area"
 
 interface ScorePanelProps {
   results: AxeResults
@@ -175,194 +176,207 @@ export function ScorePanel({
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
-            {/* Score summary */}
-            <div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-4 py-3">
-              <div>
-                <p className="font-mono text-2xl font-bold text-amber-500 tabular-nums">
-                  {score}
-                  <span className="ml-1 text-sm font-normal text-muted-foreground">
-                    / 100
-                  </span>
-                </p>
-                <p className="font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
-                  final score
-                </p>
+          <ScrollArea className="max-h-[80vh]">
+            <div className="space-y-4">
+              {/* Score summary */}
+              <div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-4 py-3">
+                <div>
+                  <p className="font-mono text-2xl font-bold text-amber-500 tabular-nums">
+                    {score}
+                    <span className="ml-1 text-sm font-normal text-muted-foreground">
+                      / 100
+                    </span>
+                  </p>
+                  <p className="font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
+                    final score
+                  </p>
+                </div>
+                <div className="space-y-0.5 text-right font-mono text-xs text-muted-foreground">
+                  <p>
+                    pass rate{" "}
+                    <span className="text-foreground">
+                      {(passRate * 100).toFixed(2)}%
+                    </span>
+                  </p>
+                  <p>
+                    {passes} / {passes + violations} rules
+                  </p>
+                  <p>
+                    penalties{" "}
+                    <span className="text-red-500 dark:text-red-400">
+                      −{penalties.toFixed(2)}
+                    </span>
+                  </p>
+                </div>
               </div>
-              <div className="space-y-0.5 text-right font-mono text-xs text-muted-foreground">
-                <p>
-                  pass rate{" "}
+
+              {/* Pass rate */}
+              <div>
+                <p className="mb-1.5 font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
+                  pass rate
+                </p>
+                <div className="flex items-center justify-between rounded border border-border bg-muted/30 px-3 py-2 font-mono text-xs">
                   <span className="text-foreground">
+                    {passes} passes / {passes + violations} total rules
+                  </span>
+                  <span className="text-emerald-600 dark:text-emerald-400">
                     {(passRate * 100).toFixed(2)}%
                   </span>
-                </p>
-                <p>
-                  {passes} / {passes + violations} rules
-                </p>
-                <p>
-                  penalties{" "}
-                  <span className="text-red-500 dark:text-red-400">
-                    −{penalties.toFixed(2)}
-                  </span>
-                </p>
-              </div>
-            </div>
-
-            {/* Pass rate */}
-            <div>
-              <p className="mb-1.5 font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
-                pass rate
-              </p>
-              <div className="flex items-center justify-between rounded border border-border bg-muted/30 px-3 py-2 font-mono text-xs">
-                <span className="text-foreground">
-                  {passes} passes / {passes + violations} total rules
-                </span>
-                <span className="text-emerald-600 dark:text-emerald-400">
-                  {(passRate * 100).toFixed(2)}%
-                </span>
-              </div>
-            </div>
-
-            {/* Violations */}
-            {IMPACT_ORDER.some((lvl) => violationsByImpact[lvl]) && (
-              <div>
-                <p className="mb-1.5 font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
-                  violation penalties
-                </p>
-                <div className="divide-y divide-border/60 overflow-hidden rounded border border-border">
-                  {IMPACT_ORDER.filter((lvl) => violationsByImpact[lvl]).map(
-                    (lvl) => (
-                      <div
-                        key={lvl}
-                        className="flex items-center justify-between bg-muted/20 px-3 py-2 font-mono text-xs"
-                      >
-                        <span className="text-foreground capitalize">
-                          {lvl}
-                          <span className="ml-1.5 text-muted-foreground">
-                            ×{IMPACT_PENALTIES[lvl]}
-                          </span>
-                        </span>
-                        <div className="flex items-center gap-3">
-                          <span className="text-muted-foreground">
-                            {violationsByImpact[lvl]} found
-                          </span>
-                          <span
-                            className={`tabular-nums ${IMPACT_COLORS[lvl]}`}
-                          >
-                            −
-                            {(
-                              violationsByImpact[lvl] * IMPACT_PENALTIES[lvl]
-                            ).toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                    )
-                  )}
                 </div>
               </div>
-            )}
 
-            {/* Incomplete */}
-            {IMPACT_ORDER.some((lvl) => incompleteByImpact[lvl]) && (
-              <div>
-                <p className="mb-1.5 font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
-                  review penalties{" "}
-                  <span className="text-muted-foreground/80">
-                    (half penalty)
-                  </span>
-                </p>
-                <div className="divide-y divide-border/60 overflow-hidden rounded border border-border">
-                  {IMPACT_ORDER.filter((lvl) => incompleteByImpact[lvl]).map(
-                    (lvl) => (
-                      <div
-                        key={lvl}
-                        className="flex items-center justify-between bg-muted/20 px-3 py-2 font-mono text-xs"
-                      >
-                        <span className="text-foreground capitalize">
-                          {lvl}
-                          <span className="ml-1.5 text-muted-foreground">
-                            ×{(IMPACT_PENALTIES[lvl] * 0.5).toFixed(2)}
+              {/* Violations */}
+              {IMPACT_ORDER.some((lvl) => violationsByImpact[lvl]) && (
+                <div>
+                  <p className="mb-1.5 font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
+                    violation penalties
+                  </p>
+                  <div className="divide-y divide-border/60 overflow-hidden rounded border border-border">
+                    {IMPACT_ORDER.filter((lvl) => violationsByImpact[lvl]).map(
+                      (lvl) => (
+                        <div
+                          key={lvl}
+                          className="flex items-center justify-between bg-muted/20 px-3 py-2 font-mono text-xs"
+                        >
+                          <span className="text-foreground capitalize">
+                            {lvl}
+                            <span className="ml-1.5 text-muted-foreground">
+                              ×{IMPACT_PENALTIES[lvl]}
+                            </span>
                           </span>
-                        </span>
-                        <div className="flex items-center gap-3">
-                          <span className="text-muted-foreground">
-                            {incompleteByImpact[lvl]} found
-                          </span>
-                          <span
-                            className={`tabular-nums ${IMPACT_COLORS[lvl]}`}
-                          >
-                            −
-                            {(
-                              incompleteByImpact[lvl] *
-                              IMPACT_PENALTIES[lvl] *
-                              0.5
-                            ).toFixed(2)}
-                          </span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-muted-foreground">
+                              {violationsByImpact[lvl]} found
+                            </span>
+                            <span
+                              className={`tabular-nums ${IMPACT_COLORS[lvl]}`}
+                            >
+                              −
+                              {(
+                                violationsByImpact[lvl] * IMPACT_PENALTIES[lvl]
+                              ).toFixed(2)}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    )
-                  )}
+                      )
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Formula */}
-            <div className="rounded border border-border bg-muted/40 px-3 py-2.5 font-mono text-xs">
-              <p className="mb-2 text-[11px] tracking-widest text-muted-foreground uppercase">
-                formula
-              </p>
+              {/* Incomplete */}
+              {IMPACT_ORDER.some((lvl) => incompleteByImpact[lvl]) && (
+                <div>
+                  <p className="mb-1.5 font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
+                    review penalties{" "}
+                    <span className="text-muted-foreground/80">
+                      (half penalty)
+                    </span>
+                  </p>
+                  <div className="divide-y divide-border/60 overflow-hidden rounded border border-border">
+                    {IMPACT_ORDER.filter((lvl) => incompleteByImpact[lvl]).map(
+                      (lvl) => (
+                        <div
+                          key={lvl}
+                          className="flex items-center justify-between bg-muted/20 px-3 py-2 font-mono text-xs"
+                        >
+                          <span className="text-foreground capitalize">
+                            {lvl}
+                            <span className="ml-1.5 text-muted-foreground">
+                              ×{(IMPACT_PENALTIES[lvl] * 0.5).toFixed(2)}
+                            </span>
+                          </span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-muted-foreground">
+                              {incompleteByImpact[lvl]} found
+                            </span>
+                            <span
+                              className={`tabular-nums ${IMPACT_COLORS[lvl]}`}
+                            >
+                              −
+                              {(
+                                incompleteByImpact[lvl] *
+                                IMPACT_PENALTIES[lvl] *
+                                0.5
+                              ).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
 
-              {/* Pass rate fraction */}
-              <div className="mb-2 flex flex-col items-center gap-0.5 py-1 text-sm">
-                <span className="text-foreground">passes</span>
-                <div className="w-full border-t border-border" />
-                <span className="text-muted-foreground">
-                  (passes + violations)
-                </span>
-              </div>
-
-              {/* Combined formula */}
-              <div className="rounded border border-border/60 bg-muted/30 px-2 py-1.5 text-[11px] leading-relaxed text-muted-foreground">
-                score = clamp(passRate × 100 − penalties, 0, 100)
-              </div>
-
-              <div className="mt-3 border-t border-border pt-2.5">
+              {/* Formula */}
+              <div className="rounded border border-border bg-muted/40 px-3 py-2.5 font-mono text-xs">
                 <p className="mb-2 text-[11px] tracking-widest text-muted-foreground uppercase">
-                  penalty weights
+                  formula
                 </p>
-                <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground capitalize">
-                      critical
-                    </span>
-                    <span className="text-red-500 dark:text-red-400">−4</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground capitalize">
-                      serious
-                    </span>
-                    <span className="text-orange-500 dark:text-orange-400">
-                      −3
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground capitalize">
-                      moderate
-                    </span>
-                    <span className="text-amber-600 dark:text-amber-400">
-                      −2
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground capitalize">
-                      minor
-                    </span>
-                    <span className="text-sky-500 dark:text-sky-400">−1</span>
+
+                <div className="mb-2 text-[11px] leading-relaxed text-muted-foreground">
+                  P = pass rate
+                  <br />D = total penalty score
+                </div>
+
+                {/* Pass rate formula */}
+                <div className="rounded border border-border/60 bg-muted/30 px-2 py-1.5 text-[11px] leading-relaxed text-muted-foreground">
+                  P = passes / total checks
+                </div>
+
+                {/* Score formula */}
+                <div className="rounded border border-border/60 bg-muted/30 px-2 py-1.5 text-[11px] leading-relaxed text-muted-foreground">
+                  S = (P * 100) - D
+                </div>
+
+                {/* Constraint note */}
+                <div className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
+                  S ∈ [0, 100], where values below 0 are set to 0 and values
+                  above 100 are set to 100
+                </div>
+
+                <div className="mt-3 border-t border-border pt-2.5">
+                  <p className="mb-2 text-[11px] tracking-widest text-muted-foreground uppercase">
+                    penalty weights
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground capitalize">
+                        critical
+                      </span>
+                      <span className="text-red-500 dark:text-red-400">−4</span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground capitalize">
+                        serious
+                      </span>
+                      <span className="text-orange-500 dark:text-orange-400">
+                        −3
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground capitalize">
+                        moderate
+                      </span>
+                      <span className="text-amber-600 dark:text-amber-400">
+                        −2
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground capitalize">
+                        minor
+                      </span>
+                      <span className="text-sky-500 dark:text-sky-400">−1</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
     </>
