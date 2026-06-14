@@ -118,7 +118,7 @@ export function ScorePanel({
 
             <button
               onClick={() => setOpen(true)}
-              className="mt-1 rounded border border-border px-2 py-0.5 font-mono text-[9px] tracking-widest text-muted-foreground/50 uppercase transition-colors hover:border-foreground/20 hover:text-muted-foreground"
+              className="mt-1 rounded border border-border px-2 py-0.5 font-mono text-[10px] tracking-widest text-muted-foreground/80 uppercase transition-colors hover:border-foreground/20 hover:text-muted-foreground"
             >
               breakdown
             </button>
@@ -144,7 +144,7 @@ export function ScorePanel({
             <StatTile
               label="n/a"
               count={results.inapplicable.length}
-              accent="text-muted-foreground/60"
+              accent="text-muted-foreground"
             />
           </div>
         </div>
@@ -153,10 +153,10 @@ export function ScorePanel({
         <div
           className={`rounded-lg border px-4 py-2.5 ${complianceCfg.className}`}
         >
-          <p className="font-mono text-[11px] font-bold tracking-wider uppercase">
+          <p className="font-mono text-xs font-bold tracking-wider uppercase">
             {complianceCfg.label}
           </p>
-          <p className="mt-0.5 font-mono text-[10px] opacity-70">
+          <p className="mt-0.5 font-mono text-[11px] opacity-85">
             {compliance.status === "failed"
               ? `${compliance.minimumViolationCount} wcag a/aa violation${compliance.minimumViolationCount !== 1 ? "s" : ""} · fix these first`
               : compliance.status === "unverified"
@@ -170,7 +170,7 @@ export function ScorePanel({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-sm font-mono">
           <DialogHeader>
-            <DialogTitle className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
+            <DialogTitle className="font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
               score breakdown
             </DialogTitle>
           </DialogHeader>
@@ -185,11 +185,11 @@ export function ScorePanel({
                     / 100
                   </span>
                 </p>
-                <p className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
+                <p className="font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
                   final score
                 </p>
               </div>
-              <div className="space-y-0.5 text-right font-mono text-[11px] text-muted-foreground">
+              <div className="space-y-0.5 text-right font-mono text-xs text-muted-foreground">
                 <p>
                   pass rate{" "}
                   <span className="text-foreground">
@@ -210,7 +210,7 @@ export function ScorePanel({
 
             {/* Pass rate */}
             <div>
-              <p className="mb-1.5 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
+              <p className="mb-1.5 font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
                 pass rate
               </p>
               <div className="flex items-center justify-between rounded border border-border bg-muted/30 px-3 py-2 font-mono text-xs">
@@ -226,7 +226,7 @@ export function ScorePanel({
             {/* Violations */}
             {IMPACT_ORDER.some((lvl) => violationsByImpact[lvl]) && (
               <div>
-                <p className="mb-1.5 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
+                <p className="mb-1.5 font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
                   violation penalties
                 </p>
                 <div className="divide-y divide-border/60 overflow-hidden rounded border border-border">
@@ -265,9 +265,9 @@ export function ScorePanel({
             {/* Incomplete */}
             {IMPACT_ORDER.some((lvl) => incompleteByImpact[lvl]) && (
               <div>
-                <p className="mb-1.5 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
+                <p className="mb-1.5 font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
                   review penalties{" "}
-                  <span className="text-muted-foreground/60">
+                  <span className="text-muted-foreground/80">
                     (half penalty)
                   </span>
                 </p>
@@ -307,13 +307,13 @@ export function ScorePanel({
             )}
 
             {/* Formula */}
-            <div className="rounded border border-border bg-muted/40 px-3 py-2.5 font-mono text-[11px]">
-              <p className="mb-2 text-[10px] tracking-widest text-muted-foreground uppercase">
+            <div className="rounded border border-border bg-muted/40 px-3 py-2.5 font-mono text-xs">
+              <p className="mb-2 text-[11px] tracking-widest text-muted-foreground uppercase">
                 formula
               </p>
 
               {/* Pass rate fraction */}
-              <div className="mb-2 flex flex-col items-center gap-0.5 py-1 text-xs">
+              <div className="mb-2 flex flex-col items-center gap-0.5 py-1 text-sm">
                 <span className="text-foreground">passes</span>
                 <div className="w-full border-t border-border" />
                 <span className="text-muted-foreground">
@@ -322,12 +322,12 @@ export function ScorePanel({
               </div>
 
               {/* Combined formula */}
-              <div className="rounded border border-border/60 bg-muted/30 px-2 py-1.5 text-[10px] leading-relaxed text-muted-foreground">
+              <div className="rounded border border-border/60 bg-muted/30 px-2 py-1.5 text-[11px] leading-relaxed text-muted-foreground">
                 score = clamp(passRate × 100 − penalties, 0, 100)
               </div>
 
               <div className="mt-3 border-t border-border pt-2.5">
-                <p className="mb-2 text-[10px] tracking-widest text-muted-foreground uppercase">
+                <p className="mb-2 text-[11px] tracking-widest text-muted-foreground uppercase">
                   penalty weights
                 </p>
                 <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">

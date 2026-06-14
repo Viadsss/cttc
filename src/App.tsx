@@ -153,7 +153,7 @@ export function App() {
         )}
 
         {!results && (
-          <p className="py-4 text-center text-[11px] tracking-wide text-muted-foreground/40">
+          <p className="py-4 text-center text-xs tracking-wide text-muted-foreground/70">
             — run audit to inspect this page —
           </p>
         )}

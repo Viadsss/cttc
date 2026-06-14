@@ -18,16 +18,21 @@ export function AppHeader() {
           <h1 className="text-sm font-bold tracking-[0.2em] text-foreground uppercase">
             AccessCheck
           </h1>
-          <span className="rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground">
+          <span className="rounded border border-border px-1.5 py-0.5 text-[11px] text-muted-foreground">
             v1
           </span>
         </div>
-        <p className="text-[11px] tracking-wide text-muted-foreground/60">
+        <p className="text-xs tracking-wide text-muted-foreground">
           axe-core · wcag 2.2 audit engine
         </p>
       </div>
 
       <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 text-[11px] tracking-widest text-muted-foreground uppercase">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
+          ready
+        </div>
+
         <Button
           variant="ghost"
           size="icon-sm"
@@ -41,11 +46,6 @@ export function AppHeader() {
             <Moon className="h-3.5 w-3.5" />
           )}
         </Button>
-
-        <div className="flex items-center gap-1.5 text-[10px] tracking-widest text-muted-foreground/40 uppercase">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500/60" />
-          ready
-        </div>
       </div>
     </div>
   )

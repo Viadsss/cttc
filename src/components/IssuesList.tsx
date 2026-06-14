@@ -92,7 +92,7 @@ export function IssuesList({
           title="not applicable"
           count={results.inapplicable.length}
           prefix="N/A"
-          accent="text-muted-foreground/60"
+          accent="text-muted-foreground"
           defaultOpen={false}
         >
           {results.inapplicable.map((issue) => {
@@ -112,10 +112,10 @@ export function IssuesList({
 
       {isClean && (
         <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-8 text-center dark:border-emerald-900 dark:bg-emerald-950/30">
-          <p className="mb-1 font-mono text-xs tracking-widest text-emerald-600 uppercase dark:text-emerald-400">
+          <p className="mb-1 font-mono text-sm tracking-widest text-emerald-600 uppercase dark:text-emerald-400">
             ✓ audit clean
           </p>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             No accessibility violations detected.
           </p>
         </div>

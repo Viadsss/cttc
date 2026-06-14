@@ -10,7 +10,7 @@ export function StatTile({ label, count, accent }: StatTileProps) {
       <span className={`font-mono text-2xl font-bold tabular-nums ${accent}`}>
         {count}
       </span>
-      <span className="font-mono text-[10px] tracking-widest text-muted-foreground/60 uppercase">
+      <span className="font-mono text-[11px] tracking-widest text-muted-foreground/80 uppercase">
         {label}
       </span>
     </div>

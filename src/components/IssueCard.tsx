@@ -25,7 +25,7 @@ export function IssueCard({
     type === "passes"
       ? "text-emerald-600 dark:text-emerald-400"
       : type === "inapplicable"
-        ? "text-muted-foreground/60"
+        ? "text-muted-foreground"
         : impact.className.split(" ")[0]
 
   async function handleHighlight(selector: string) {
@@ -54,7 +54,7 @@ export function IssueCard({
         className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50"
       >
         <span
-          className={`mt-0.5 shrink-0 font-mono text-[10px] font-bold ${codeColor}`}
+          className={`mt-0.5 shrink-0 font-mono text-[11px] font-bold ${codeColor}`}
         >
           {type === "passes"
             ? "OK"
@@ -64,22 +64,22 @@ export function IssueCard({
         </span>
 
         <div className="min-w-0 flex-1">
-          <p className="mb-0.5 text-xs leading-snug font-semibold text-foreground">
+          <p className="mb-0.5 text-sm leading-snug font-semibold text-foreground">
             {issue.help}
           </p>
-          <p className="text-[11px] leading-relaxed text-muted-foreground">
+          <p className="text-xs leading-relaxed text-muted-foreground">
             {issue.description}
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {type !== "passes" && type !== "inapplicable" && (
               <span
-                className={`rounded border px-1.5 py-0.5 font-mono text-[10px] ${impact.className}`}
+                className={`rounded border px-1.5 py-0.5 font-mono text-[11px] ${impact.className}`}
               >
                 {impact.label}
               </span>
             )}
             {issue.nodes.length > 0 && (
-              <span className="rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+              <span className="rounded border border-border px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
                 {issue.nodes.length}{" "}
                 {issue.nodes.length === 1 ? "node" : "nodes"}
               </span>
@@ -90,7 +90,7 @@ export function IssueCard({
               .map((tag) => (
                 <span
                   key={tag}
-                  className="rounded border border-border/60 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground/60"
+                  className="rounded border border-border/60 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground/80"
                 >
                   {tag}
                 </span>
@@ -98,7 +98,7 @@ export function IssueCard({
           </div>
         </div>
 
-        <span className="mt-0.5 shrink-0 text-base leading-none text-muted-foreground/40">
+        <span className="mt-0.5 shrink-0 text-base leading-none text-muted-foreground/70">
           {isExpanded ? "−" : "+"}
         </span>
       </button>
@@ -108,14 +108,14 @@ export function IssueCard({
         <div className="space-y-4 bg-muted/20 px-4 pt-1 pb-4">
           {/* Fix / pass reason */}
           <div>
-            <p className="mb-2 font-mono text-[10px] tracking-widest text-muted-foreground/60 uppercase">
+            <p className="mb-2 font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
               {type === "passes"
                 ? "why it passed"
                 : type === "inapplicable"
                   ? "why it doesn't apply"
                   : "fix required"}
             </p>
-            <div className="rounded border border-border bg-muted/40 px-3 py-2 text-xs text-foreground">
+            <div className="rounded border border-border bg-muted/40 px-3 py-2 text-sm text-foreground">
               {issue.help}
             </div>
           </div>
@@ -123,13 +123,13 @@ export function IssueCard({
           {/* Affected / passing elements */}
           {issue.nodes.length > 0 && (
             <div>
-              <p className="mb-2 font-mono text-[10px] tracking-widest text-muted-foreground/60 uppercase">
+              <p className="mb-2 font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
                 {type === "passes"
                   ? "passing elements"
                   : type === "inapplicable"
                     ? "matched elements"
                     : "affected elements"}{" "}
-                <span className="text-muted-foreground/30">
+                <span className="text-muted-foreground/70">
                   [{issue.nodes.length}]
                 </span>
               </p>
@@ -144,12 +144,12 @@ export function IssueCard({
                   return (
                     <div key={idx} className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="font-mono text-[10px] text-muted-foreground/40">
+                        <span className="font-mono text-[11px] text-muted-foreground/70">
                           node_{String(idx + 1).padStart(2, "0")}
                         </span>
                         {selector && (
                           <button
-                            className={`flex items-center gap-1 rounded border px-2 py-0.5 font-mono text-[10px] transition-colors ${
+                            className={`flex items-center gap-1 rounded border px-2 py-0.5 font-mono text-[11px] transition-colors ${
                               isHighlighted
                                 ? "border-red-300 bg-red-50 text-red-600 dark:border-red-800 dark:bg-red-950/50 dark:text-red-400"
                                 : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground"
@@ -175,7 +175,7 @@ export function IssueCard({
                       </div>
 
                       <div
-                        className={`rounded border px-3 py-2 font-mono text-[11px] leading-relaxed break-all transition-all ${
+                        className={`rounded border px-3 py-2 font-mono text-xs leading-relaxed break-all transition-all ${
                           isHighlighted
                             ? "border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/20 dark:text-red-300"
                             : "border-border bg-muted/40 text-muted-foreground"
@@ -199,7 +199,7 @@ export function IssueCard({
               href={issue.helpUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 font-mono text-[11px] text-amber-600 transition-colors hover:text-amber-500 dark:text-amber-500 dark:hover:text-amber-400"
+              className="inline-flex items-center gap-1 font-mono text-xs text-amber-600 transition-colors hover:text-amber-500 dark:text-amber-500 dark:hover:text-amber-400"
             >
               docs ›
             </a>

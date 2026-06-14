@@ -11,7 +11,7 @@ export function MetaPanel({ results }: MetaPanelProps) {
       <DiagRow
         label="url"
         value={
-          <span className="text-[11px] text-amber-600 dark:text-amber-400">
+          <span className="text-xs text-amber-600 dark:text-amber-400">
             {results.url}
           </span>
         }

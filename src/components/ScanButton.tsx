@@ -11,7 +11,7 @@ export function ScanButton({ loading, disabled, onClick }: ScanButtonProps) {
     <button
       onClick={onClick}
       disabled={disabled}
-      className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-border bg-muted/50 text-xs font-bold tracking-[0.15em] text-foreground uppercase transition-all hover:border-foreground/20 hover:bg-muted disabled:opacity-40"
+      className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-border bg-muted/50 text-sm font-bold tracking-[0.15em] text-foreground uppercase transition-all hover:border-foreground/20 hover:bg-muted disabled:opacity-40"
     >
       {loading ? (
         <>
@@ -20,7 +20,7 @@ export function ScanButton({ loading, disabled, onClick }: ScanButtonProps) {
         </>
       ) : (
         <>
-          <span className="text-muted-foreground/40">›</span>
+          <span className="text-muted-foreground/70">›</span>
           run accessibility audit
         </>
       )}

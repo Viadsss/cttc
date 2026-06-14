@@ -31,17 +31,17 @@ export function Section({
         <CollapsibleTrigger asChild>
           <button className="flex w-full items-center gap-3 border-b border-border bg-muted/50 px-4 py-3 text-left transition-colors hover:bg-muted">
             <span
-              className={`font-mono text-[10px] font-bold tracking-widest ${accent}`}
+              className={`font-mono text-[11px] font-bold tracking-widest ${accent}`}
             >
               {prefix}
             </span>
-            <span className="flex-1 font-mono text-xs font-semibold tracking-wider text-foreground uppercase">
+            <span className="flex-1 font-mono text-sm font-semibold tracking-wider text-foreground uppercase">
               {title}
             </span>
-            <span className="mr-2 font-mono text-xs text-muted-foreground/50">
+            <span className="mr-2 font-mono text-xs text-muted-foreground/80">
               [{count}]
             </span>
-            <span className="text-muted-foreground/40">
+            <span className="text-muted-foreground/70">
               {open ? (
                 <ChevronDown className="h-3.5 w-3.5" />
               ) : (
