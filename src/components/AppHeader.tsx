@@ -1,6 +1,15 @@
-import { Zap } from "lucide-react"
+import { Zap, Sun, Moon } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { useTheme } from "./theme-provider"
 
 export function AppHeader() {
+  const { theme, setTheme } = useTheme()
+
+  const isDark =
+    theme === "dark" ||
+    (theme === "system" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches)
+
   return (
     <div className="flex items-start justify-between pt-1">
       <div>
@@ -17,9 +26,26 @@ export function AppHeader() {
           axe-core · wcag 2.2 audit engine
         </p>
       </div>
-      <div className="flex items-center gap-1.5 text-[10px] tracking-widest text-muted-foreground/40 uppercase">
-        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500/60" />
-        ready
+
+      <div className="flex items-center gap-3">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => setTheme(isDark ? "light" : "dark")}
+          aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+          title="Toggle theme (D)"
+        >
+          {isDark ? (
+            <Sun className="h-3.5 w-3.5" />
+          ) : (
+            <Moon className="h-3.5 w-3.5" />
+          )}
+        </Button>
+
+        <div className="flex items-center gap-1.5 text-[10px] tracking-widest text-muted-foreground/40 uppercase">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500/60" />
+          ready
+        </div>
       </div>
     </div>
   )
