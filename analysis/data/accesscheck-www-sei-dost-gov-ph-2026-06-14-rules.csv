@@ -24,7 +24,7 @@ avoid-inline-spacing,Inline text spacing must be adjustable with custom styleshe
 blink,<blink> elements are deprecated and must not be used,A,,,,✓
 button-name,Buttons must have discernible text,A,✓,,,
 bypass,Page must have means to bypass repeated blocks,A,✓,,,
-color-contrast,Elements must meet minimum color contrast ratio thresholds,AA,✓,,✓,
+color-contrast,Elements must meet minimum color contrast ratio thresholds,AA,,,✓,
 color-contrast-enhanced,Elements must meet enhanced color contrast ratio thresholds,AAA,✓,,,
 definition-list,"<dl> elements must only directly contain properly-ordered <dt> and <dd> groups, <script>, <template> or <div> elements",A,,,,✓
 dlitem,<dt> and <dd> elements must be contained by a <dl>,A,,,,✓
@@ -44,13 +44,13 @@ input-image-alt,Image buttons must have alternative text,A,,,,✓
 label,Form elements must have labels,A,,,,✓
 link-in-text-block,Links must be distinguishable without relying on color,A,,,,✓
 link-name,Links must have discernible text,A,✓,,,
-list,"<ul> and <ol> must only directly contain <li>, <script> or <template> elements",A,✓,✓,,
+list,"<ul> and <ol> must only directly contain <li>, <script> or <template> elements",A,,✓,,
 listitem,<li> elements must be contained in a <ul> or <ol>,A,✓,,,
 marquee,<marquee> elements are deprecated and must not be used,A,,,,✓
 meta-refresh,Delayed refresh under 20 hours must not be used,A,,,,✓
 meta-refresh-no-exceptions,Delayed refresh must not be used,AAA,,,,✓
 meta-viewport,Zooming and scaling must not be disabled,AA,✓,,,
-nested-interactive,Interactive controls must not be nested,A,✓,✓,,
+nested-interactive,Interactive controls must not be nested,A,,✓,,
 no-autoplay-audio,<video> or <audio> elements must not play automatically,A,,,,✓
 object-alt,<object> elements must have alternative text,A,,,,✓
 role-img-alt,"[role=""img""] elements must have alternative text",A,,,,✓
@@ -59,9 +59,9 @@ select-name,Select element must have an accessible name,A,,,,✓
 server-side-image-map,Server-side image maps must not be used,A,,,,✓
 summary-name,Summary elements must have discernible text,A,,,,✓
 svg-img-alt,<svg> elements with an img role must have alternative text,A,,,,✓
-target-size,"All touch targets must be 24px large, or leave sufficient space",AA,✓,✓,,
+target-size,"All touch targets must be 24px large, or leave sufficient space",AA,,✓,,
 td-headers-attr,Table cell headers attributes must refer to other <th> elements in the same table,A,,,,✓
 th-has-data-cells,Table headers in a data table must refer to data cells,A,,,,✓
 valid-lang,lang attribute must have a valid value,AA,,,,✓
 video-caption,<video> elements must have captions,A,,,,✓
-TOTAL,,,21,3,1,44
+TOTAL,,,17,3,1,44

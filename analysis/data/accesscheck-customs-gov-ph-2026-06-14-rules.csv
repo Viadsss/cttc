@@ -1,6 +1,6 @@
 ﻿id,description,level,passes,violations,incomplete,inapplicable
 area-alt,Active <area> elements must have alternative text,A,,,,✓
-aria-allowed-attr,Elements must only use supported ARIA attributes,A,✓,✓,,
+aria-allowed-attr,Elements must only use supported ARIA attributes,A,,✓,,
 aria-braille-equivalent,aria-braille attributes must have a non-braille equivalent,A,,,,✓
 aria-command-name,ARIA commands must have an accessible name,A,,,,✓
 aria-conditional-attr,ARIA attributes must be used as specified for the element's role,A,✓,,,
@@ -24,7 +24,7 @@ avoid-inline-spacing,Inline text spacing must be adjustable with custom styleshe
 blink,<blink> elements are deprecated and must not be used,A,,,,✓
 button-name,Buttons must have discernible text,A,,,,✓
 bypass,Page must have means to bypass repeated blocks,A,✓,,,
-color-contrast,Elements must meet minimum color contrast ratio thresholds,AA,✓,✓,✓,
+color-contrast,Elements must meet minimum color contrast ratio thresholds,AA,,✓,,
 color-contrast-enhanced,Elements must meet enhanced color contrast ratio thresholds,AAA,✓,,,
 definition-list,"<dl> elements must only directly contain properly-ordered <dt> and <dd> groups, <script>, <template> or <div> elements",A,,,,✓
 dlitem,<dt> and <dd> elements must be contained by a <dl>,A,,,,✓
@@ -43,7 +43,7 @@ input-button-name,Input buttons must have discernible text,A,,,,✓
 input-image-alt,Image buttons must have alternative text,A,,,,✓
 label,Form elements must have labels,A,✓,,,
 link-in-text-block,Links must be distinguishable without relying on color,A,,,,✓
-link-name,Links must have discernible text,A,✓,✓,,
+link-name,Links must have discernible text,A,,✓,,
 list,"<ul> and <ol> must only directly contain <li>, <script> or <template> elements",A,✓,,,
 listitem,<li> elements must be contained in a <ul> or <ol>,A,✓,,,
 marquee,<marquee> elements are deprecated and must not be used,A,,,,✓
@@ -64,4 +64,4 @@ td-headers-attr,Table cell headers attributes must refer to other <th> elements 
 th-has-data-cells,Table headers in a data table must refer to data cells,A,,,,✓
 valid-lang,lang attribute must have a valid value,AA,,,,✓
 video-caption,<video> elements must have captions,A,,,,✓
-TOTAL,,,28,3,1,37
+TOTAL,,,25,3,0,37
