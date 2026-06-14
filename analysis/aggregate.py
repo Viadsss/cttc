@@ -25,6 +25,20 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import matplotlib
+matplotlib.use("Agg")  # non-interactive backend (no display needed)
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import numpy as np
+from matplotlib import font_manager
+
+font_manager.fontManager.addfont("styles/Outfit.ttf")  
+plt.rcParams.update({
+    "font.family": "Outfit",
+    "figure.dpi": 150,
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+})
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
@@ -57,7 +71,6 @@ def load_summaries(pairs: list[tuple[Path, Path, str]]) -> pd.DataFrame:
     frames = []
     for summary_path, _, page_id in pairs:
         df = pd.read_csv(summary_path, encoding="utf-8-sig")
-        # pandas reads the literal string "None" as NaN by default; restore it
         df["Conformance Level Violation"] = df["Conformance Level Violation"].fillna(
             "None"
         )
@@ -70,19 +83,18 @@ def load_rules(pairs: list[tuple[Path, Path, str]]) -> pd.DataFrame:
     frames = []
     for _, rules_path, page_id in pairs:
         df = pd.read_csv(rules_path, encoding="utf-8-sig")
-        df = df[df["id"] != "TOTAL"].copy()  # drop per-page TOTAL row
+        df = df[df["id"] != "TOTAL"].copy()
         df.insert(0, "page_id", page_id)
         frames.append(df)
     combined = pd.concat(frames, ignore_index=True)
 
-    # Normalize the ✓ marker columns into booleans
     for col in ["passes", "violations", "incomplete", "inapplicable"]:
         combined[col] = combined[col].fillna("").astype(str).str.strip() == "✓"
 
     return combined
 
 
-# ── Item 1: Average Accessibility Score ─────────────────────────────────────
+# ── Item 1: Average Accessibility Score ───────────────────────────────────
 
 
 def average_score(summaries: pd.DataFrame) -> pd.DataFrame:
@@ -95,7 +107,57 @@ def average_score(summaries: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-# ── Item 2: Minimum Standard Compliance Rate ─────────────────────────────────
+def chart_average_score(df: pd.DataFrame) -> None:
+    score = df["value"].iloc[0]
+    n_pages = df["n_pages"].iloc[0]
+
+    fig, ax = plt.subplots(figsize=(5, 5), subplot_kw={"aspect": "equal"})
+
+    # Get the style's default color cycle for the arc colour
+    prop_cycle = plt.rcParams["axes.prop_cycle"]
+    arc_color = prop_cycle.by_key()["color"][0]
+
+    theta = np.linspace(np.pi, 0, 300)
+    r_outer, r_inner = 1.0, 0.65
+
+    def ring_patch(theta_end, color, zorder=2):
+        th = np.linspace(np.pi, theta_end, 300)
+        xs = np.concatenate([r_outer * np.cos(th), r_inner * np.cos(th[::-1])])
+        ys = np.concatenate([r_outer * np.sin(th), r_inner * np.sin(th[::-1])])
+        return mpatches.Polygon(
+            np.column_stack([xs, ys]), closed=True,
+            facecolor=color, edgecolor="none", zorder=zorder
+        )
+
+    # background ring uses a muted version of the axes facecolor
+    bg_color = plt.rcParams.get("axes.facecolor", "#EEEEEE")
+    ax.add_patch(ring_patch(0, bg_color, zorder=1))
+
+    score_theta = np.pi - (score / 100) * np.pi
+    ax.add_patch(ring_patch(score_theta, arc_color, zorder=2))
+
+    text_color = plt.rcParams.get("text.color", "#333333")
+    ax.text(0, 0.05, f"{score}", ha="center", va="center",
+            fontsize=44, fontweight="bold", color=text_color)
+    ax.text(0, -0.22, "out of 100", ha="center", va="center",
+            fontsize=11, color=text_color)
+    ax.text(0, -0.48, f"n = {n_pages} pages", ha="center", va="center",
+            fontsize=10, color=text_color)
+
+    ax.set_xlim(-1.2, 1.2)
+    ax.set_ylim(-0.65, 1.2)
+    ax.axis("off")
+    ax.set_title("Average Accessibility Score", fontsize=13,
+                 fontweight="bold", pad=12)
+
+    fig.tight_layout()
+    out = OUTPUT_DIR / "1-average-score.png"
+    fig.savefig(out, bbox_inches="tight")
+    plt.close(fig)
+    print(f"  -> chart saved to {out.relative_to(BASE_DIR)}")
+
+
+# ── Item 2: Minimum Standard Compliance Rate ──────────────────────────────
 
 
 def compliance_rate(summaries: pd.DataFrame) -> pd.DataFrame:
@@ -115,11 +177,54 @@ def compliance_rate(summaries: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-# ── Item 3: Rule-Level Aggregation ───────────────────────────────────────────
+def chart_compliance_rate(df: pd.DataFrame) -> None:
+    # Exclude "unverified" per request
+    plot_df = df[df["status"] != "unverified"].copy()
+
+    labels = plot_df["status"].str.capitalize().tolist()
+    sizes  = plot_df["n_pages"].tolist()
+
+    # Pull colours from the style's cycle
+    cycle_colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    colors = [cycle_colors[i % len(cycle_colors)] for i in range(len(labels))]
+
+    fig, ax = plt.subplots(figsize=(6, 6))
+
+    wedges, texts, autotexts = ax.pie(
+        sizes,
+        labels=None,
+        colors=colors,
+        autopct=lambda p: f"{p:.1f}%" if p > 0 else "",
+        startangle=90,
+        pctdistance=0.72,
+        wedgeprops={"linewidth": 2, "edgecolor": plt.rcParams.get("figure.facecolor", "white")},
+    )
+    for at in autotexts:
+        at.set_fontsize(13)
+        at.set_fontweight("bold")
+
+    legend_patches = [
+        mpatches.Patch(color=colors[i], label=f"{labels[i]}  (n={sizes[i]})")
+        for i in range(len(labels))
+    ]
+    ax.legend(handles=legend_patches, loc="lower center",
+              bbox_to_anchor=(0.5, -0.08), ncol=len(labels),
+              frameon=False, fontsize=11)
+
+    ax.set_title("Minimum Standard Compliance Rate",
+                 fontsize=13, fontweight="bold", pad=16)
+
+    fig.tight_layout()
+    out = OUTPUT_DIR / "2-compliance-rate.png"
+    fig.savefig(out, bbox_inches="tight")
+    plt.close(fig)
+    print(f"  -> chart saved to {out.relative_to(BASE_DIR)}")
+
+
+# ── Item 3: Rule-Level Aggregation ────────────────────────────────────────
 
 
 def rule_level_aggregation(rules: pd.DataFrame, n_pages: int) -> pd.DataFrame:
-    # one row per rule id per page already -> sum booleans across pages
     grouped = (
         rules.groupby("id")
         .agg(
@@ -148,7 +253,54 @@ def rule_level_aggregation(rules: pd.DataFrame, n_pages: int) -> pd.DataFrame:
     return grouped
 
 
-# ── Item 4: POUR Distribution ────────────────────────────────────────────────
+def chart_rule_level_aggregation(df: pd.DataFrame) -> None:
+    plot_df = df[df["id"] != "TOTAL"].copy()
+    plot_df["issues"] = plot_df["violations"] + plot_df["incomplete"]
+    plot_df = plot_df.sort_values("issues", ascending=True)
+
+    labels      = plot_df["id"].tolist()
+    passes      = plot_df["passes"].tolist()
+    violations  = plot_df["violations"].tolist()
+    incomplete  = plot_df["incomplete"].tolist()
+    inapplicable= plot_df["inapplicable"].tolist()
+
+    y = np.arange(len(labels))
+    height = 0.6
+
+    cycle_colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+
+    fig, ax = plt.subplots(figsize=(10, max(5, len(labels) * 0.45)))
+
+    bars = [
+        (passes,        cycle_colors[0], "Passes"),
+        (violations,    cycle_colors[1], "Violations"),
+        (incomplete,    cycle_colors[2], "Incomplete"),
+        (inapplicable,  cycle_colors[3], "Inapplicable"),
+    ]
+
+    left = np.zeros(len(labels))
+    for values, color, label in bars:
+        ax.barh(y, values, height=height, left=left,
+                color=color, label=label, linewidth=0)
+        left += np.array(values)
+
+    ax.set_yticks(y)
+    ax.set_yticklabels(labels, fontsize=9)
+    ax.set_xlabel("Number of Pages", fontsize=11)
+    ax.set_title("Rule-Level Aggregation\n(sorted by issues)", fontsize=13,
+                 fontweight="bold", pad=12)
+    ax.legend(loc="lower right", frameon=False, fontsize=10)
+    ax.spines["left"].set_visible(False)
+    ax.tick_params(left=False)
+
+    fig.tight_layout()
+    out = OUTPUT_DIR / "3-rule-level-aggregation.png"
+    fig.savefig(out, bbox_inches="tight")
+    plt.close(fig)
+    print(f"  -> chart saved to {out.relative_to(BASE_DIR)}")
+
+
+# ── Item 4: POUR Distribution ─────────────────────────────────────────────
 
 
 def pour_distribution(rules: pd.DataFrame, n_pages: int) -> pd.DataFrame:
@@ -169,7 +321,6 @@ def pour_distribution(rules: pd.DataFrame, n_pages: int) -> pd.DataFrame:
 
     merged["flagged"] = merged["violations"] | merged["incomplete"]
 
-    # per page, per POUR principle: did any rule under that principle get flagged?
     page_flags = (
         merged.groupby(["page_id", "POUR"])["flagged"].any().reset_index()
     )
@@ -191,7 +342,51 @@ def pour_distribution(rules: pd.DataFrame, n_pages: int) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-# ── Item 5: Conformance Level Distribution (Option B) ────────────────────────
+def chart_pour_distribution(df: pd.DataFrame, n_pages: int) -> None:
+    principles = df["POUR"].tolist()
+    counts     = df["n_pages_with_issue"].tolist()
+    pcts       = df["pct_pages_with_issue"].tolist()
+
+    full_names = {"P": "Perceivable", "O": "Operable",
+                  "U": "Understandable", "R": "Robust"}
+    x_labels = [f"{p}\n{full_names[p]}" for p in principles]
+
+    cycle_colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    colors = [cycle_colors[i % len(cycle_colors)] for i in range(len(principles))]
+
+    fig, ax = plt.subplots(figsize=(7, 5))
+
+    bars = ax.bar(x_labels, counts, color=colors, linewidth=0, width=0.55)
+
+    for bar, count, pct in zip(bars, counts, pcts):
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 0.3,
+            f"{count}  ({pct}%)",
+            ha="center", va="bottom", fontsize=10,
+        )
+
+    ax.set_ylabel("Pages with Issue", fontsize=11)
+    ax.set_ylim(0, max(counts) * 1.25 if counts else 1)
+    ax.set_title("POUR Principle Distribution", fontsize=13,
+                 fontweight="bold", pad=12)
+    ax.spines["bottom"].set_visible(False)
+    ax.tick_params(bottom=False)
+    ax.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
+
+    # Reference line: total pages
+    ax.axhline(n_pages, linestyle="--", linewidth=1)
+    ax.text(len(principles) - 0.45, n_pages + 0.2,
+            f"Total pages: {n_pages}", fontsize=9)
+
+    fig.tight_layout()
+    out = OUTPUT_DIR / "4-pour-distribution.png"
+    fig.savefig(out, bbox_inches="tight")
+    plt.close(fig)
+    print(f"  -> chart saved to {out.relative_to(BASE_DIR)}")
+
+
+# ── Item 5: Conformance Level Distribution ────────────────────────────────
 
 
 def conformance_level_distribution(summaries: pd.DataFrame) -> pd.DataFrame:
@@ -209,6 +404,42 @@ def conformance_level_distribution(summaries: pd.DataFrame) -> pd.DataFrame:
             }
         )
     return pd.DataFrame(rows)
+
+
+def chart_conformance_level_distribution(df: pd.DataFrame) -> None:
+    labels = df["lowest_failing_level"].tolist()
+    counts = df["n_pages"].tolist()
+    pcts   = df["pct"].tolist()
+
+    cycle_colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    colors = [cycle_colors[i % len(cycle_colors)] for i in range(len(labels))]
+
+    fig, ax = plt.subplots(figsize=(7, 5))
+
+    bars = ax.bar(labels, counts, color=colors, linewidth=0, width=0.55)
+
+    for bar, count, pct in zip(bars, counts, pcts):
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 0.3,
+            f"{count}  ({pct}%)",
+            ha="center", va="bottom", fontsize=10,
+        )
+
+    ax.set_ylabel("Number of Pages", fontsize=11)
+    ax.set_ylim(0, max(counts) * 1.25 if counts else 1)
+    ax.set_xlabel("Lowest Failing Conformance Level", fontsize=11)
+    ax.set_title("Conformance Level Distribution", fontsize=13,
+                 fontweight="bold", pad=12)
+    ax.spines["bottom"].set_visible(False)
+    ax.tick_params(bottom=False)
+    ax.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
+
+    fig.tight_layout()
+    out = OUTPUT_DIR / "5-conformance-level-distribution.png"
+    fig.savefig(out, bbox_inches="tight")
+    plt.close(fig)
+    print(f"  -> chart saved to {out.relative_to(BASE_DIR)}")
 
 
 # ── Main ──────────────────────────────────────────────────────────────────
@@ -244,6 +475,14 @@ def main() -> int:
         print(f"\n== {name} ==")
         print(df.to_string(index=False))
         print(f"  -> wrote {out_path.relative_to(BASE_DIR)}")
+
+    # Generate charts
+    print("\n== Generating charts ==")
+    chart_average_score(results["1-average-score"])
+    chart_compliance_rate(results["2-compliance-rate"])
+    chart_rule_level_aggregation(results["3-rule-level-aggregation"])
+    chart_pour_distribution(results["4-pour-distribution"], n_pages)
+    chart_conformance_level_distribution(results["5-conformance-level-distribution"])
 
     return 0
 
