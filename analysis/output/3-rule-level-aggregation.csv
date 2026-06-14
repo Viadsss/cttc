@@ -1,8 +1,8 @@
 id,description,level,passes,violations,incomplete,inapplicable
 area-alt,Active <area> elements must have alternative text,A,0,0,0,25
-aria-allowed-attr,Elements must only use supported ARIA attributes,A,17,2,0,8
+aria-allowed-attr,Elements must only use supported ARIA attributes,A,15,2,0,8
 aria-braille-equivalent,aria-braille attributes must have a non-braille equivalent,A,0,0,0,25
-aria-command-name,ARIA commands must have an accessible name,A,8,1,0,17
+aria-command-name,ARIA commands must have an accessible name,A,7,1,0,17
 aria-conditional-attr,ARIA attributes must be used as specified for the element's role,A,17,0,0,8
 aria-deprecated-role,Deprecated ARIA roles must not be used,A,18,0,0,7
 aria-hidden-body,"aria-hidden=""true"" must not be present on the document body",A,25,0,0,0
@@ -10,58 +10,58 @@ aria-hidden-focus,ARIA hidden element must not be focusable or contain focusable
 aria-input-field-name,ARIA input fields must have an accessible name,A,0,0,0,25
 aria-meter-name,ARIA meter nodes must have an accessible name,A,0,0,0,25
 aria-progressbar-name,ARIA progressbar nodes must have an accessible name,A,0,0,0,25
-aria-prohibited-attr,Elements must only use permitted ARIA attributes,A,17,0,1,8
+aria-prohibited-attr,Elements must only use permitted ARIA attributes,A,16,0,1,8
 aria-required-attr,Required ARIA attributes must be provided,A,18,0,0,7
-aria-required-children,Certain ARIA roles must contain particular children,A,6,1,1,18
+aria-required-children,Certain ARIA roles must contain particular children,A,5,1,1,18
 aria-required-parent,Certain ARIA roles must be contained by particular parents,A,6,0,0,19
 aria-roles,ARIA roles used must conform to valid values,A,18,0,0,7
 aria-toggle-field-name,ARIA toggle fields must have an accessible name,A,0,1,0,24
 aria-tooltip-name,ARIA tooltip nodes must have an accessible name,A,0,0,0,25
 aria-valid-attr,ARIA attributes must conform to valid names,A,17,0,0,8
-aria-valid-attr-value,ARIA attributes must conform to valid values,A,17,0,7,8
+aria-valid-attr-value,ARIA attributes must conform to valid values,A,10,0,7,8
 autocomplete-valid,autocomplete attribute must be used correctly,AA,4,0,0,21
 avoid-inline-spacing,Inline text spacing must be adjustable with custom stylesheets,AA,24,0,0,1
 blink,<blink> elements are deprecated and must not be used,A,0,0,0,25
-button-name,Buttons must have discernible text,A,21,3,0,4
+button-name,Buttons must have discernible text,A,18,3,0,4
 bypass,Page must have means to bypass repeated blocks,A,22,0,1,2
-color-contrast,Elements must meet minimum color contrast ratio thresholds,AA,25,17,19,0
-color-contrast-enhanced,Elements must meet enhanced color contrast ratio thresholds,AAA,25,18,4,0
+color-contrast,Elements must meet minimum color contrast ratio thresholds,AA,2,17,6,0
+color-contrast-enhanced,Elements must meet enhanced color contrast ratio thresholds,AAA,7,18,0,0
 definition-list,"<dl> elements must only directly contain properly-ordered <dt> and <dd> groups, <script>, <template> or <div> elements",A,2,1,0,22
 dlitem,<dt> and <dd> elements must be contained by a <dl>,A,3,0,0,22
 document-title,Documents must have <title> element to aid in navigation,A,25,0,0,0
-duplicate-id-aria,IDs used in ARIA and labels must be unique,A,16,0,5,8
-form-field-multiple-labels,Form field must not have multiple label elements,A,17,0,1,8
+duplicate-id-aria,IDs used in ARIA and labels must be unique,A,12,0,5,8
+form-field-multiple-labels,Form field must not have multiple label elements,A,16,0,1,8
 frame-focusable-content,Frames with focusable content must not have tabindex=-1,A,0,0,0,25
-frame-title,Frames must have an accessible name,A,6,8,0,15
+frame-title,Frames must have an accessible name,A,2,8,0,15
 frame-title-unique,Frames must have a unique title attribute,A,6,0,0,19
 html-has-lang,<html> element must have a lang attribute,A,20,5,0,0
 html-lang-valid,<html> element must have a valid value for the lang attribute,A,20,0,0,5
 html-xml-lang-mismatch,HTML elements with lang and xml:lang must have the same base language,A,0,0,0,25
-identical-links-same-purpose,Links with the same name must have a similar purpose,AAA,22,0,10,3
-image-alt,Images must have alternative text,A,24,9,0,0
+identical-links-same-purpose,Links with the same name must have a similar purpose,AAA,12,0,10,3
+image-alt,Images must have alternative text,A,16,9,0,0
 input-button-name,Input buttons must have discernible text,A,0,0,0,25
 input-image-alt,Image buttons must have alternative text,A,0,0,0,25
-label,Form elements must have labels,A,14,4,0,11
-link-in-text-block,Links must be distinguishable without relying on color,A,6,2,2,17
-link-name,Links must have discernible text,A,22,14,0,3
-list,"<ul> and <ol> must only directly contain <li>, <script> or <template> elements",A,18,4,0,7
+label,Form elements must have labels,A,10,4,0,11
+link-in-text-block,Links must be distinguishable without relying on color,A,4,2,2,17
+link-name,Links must have discernible text,A,8,14,0,3
+list,"<ul> and <ol> must only directly contain <li>, <script> or <template> elements",A,14,4,0,7
 listitem,<li> elements must be contained in a <ul> or <ol>,A,18,0,0,7
 marquee,<marquee> elements are deprecated and must not be used,A,0,0,0,25
 meta-refresh,Delayed refresh under 20 hours must not be used,A,0,0,0,25
 meta-refresh-no-exceptions,Delayed refresh must not be used,AAA,0,0,0,25
 meta-viewport,Zooming and scaling must not be disabled,AA,22,3,0,0
-nested-interactive,Interactive controls must not be nested,A,25,1,0,0
+nested-interactive,Interactive controls must not be nested,A,24,1,0,0
 no-autoplay-audio,<video> or <audio> elements must not play automatically,A,0,0,0,25
 object-alt,<object> elements must have alternative text,A,0,0,0,25
 role-img-alt,"[role=""img""] elements must have alternative text",A,0,0,0,25
-scrollable-region-focusable,Scrollable region must have keyboard access,A,6,0,0,19
+scrollable-region-focusable,Scrollable region must have keyboard access,A,5,0,0,20
 select-name,Select element must have an accessible name,A,3,5,0,17
 server-side-image-map,Server-side image maps must not be used,A,0,0,0,25
 summary-name,Summary elements must have discernible text,A,0,0,0,25
 svg-img-alt,<svg> elements with an img role must have alternative text,A,0,0,0,25
-target-size,"All touch targets must be 24px large, or leave sufficient space",AA,25,5,0,0
+target-size,"All touch targets must be 24px large, or leave sufficient space",AA,20,5,0,0
 td-headers-attr,Table cell headers attributes must refer to other <th> elements in the same table,A,4,0,0,21
 th-has-data-cells,Table headers in a data table must refer to data cells,A,3,0,1,21
 valid-lang,lang attribute must have a valid value,AA,0,0,0,25
 video-caption,<video> elements must have captions,A,0,0,1,24
-TOTAL,,,649,104,53,949
+TOTAL,,,535,104,36,950
