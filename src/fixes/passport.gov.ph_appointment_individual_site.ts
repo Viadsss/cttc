@@ -45,10 +45,10 @@ export default function () {
   })
 
   // =========================================================================
-  // 2. ACCESSIBILITY STRUCUTRE FIXES (Buttons & Images)
+  // 2. ACCESSIBILITY STRUCTURE FIXES (Buttons, Images, & Lists)
   // =========================================================================
 
-  // Fix: Mobile navbar toggle button missing screen-reader text
+  // Fix: button-has-visible-text (WCAG 2 A 4.1.2)
   document
     .querySelectorAll<HTMLButtonElement>("button.navbar-toggle")
     .forEach((el) => {
@@ -57,26 +57,57 @@ export default function () {
       }
     })
 
-  // Fix: Inline base64 image missing alt attribute
+  // Fix: image-alt-text (WCAG 2 A 1.1.1)
   document
     .querySelectorAll<HTMLImageElement>("img[src^='data:image']")
     .forEach((el) => {
-      el.setAttribute("alt", "")
+      el.setAttribute("alt", "Banner of Department of Foreign Affairs")
       el.setAttribute("role", "presentation")
     })
+
+  // Fix: description-list-hierarchy (WCAG 2 A 1.3.1)
+  // Instead of fighting <dl> structure requirements, we convert the broken
+  // description elements into a highly accessible Unordered List (<ul>/<li>).
+  const sitemapLinks = document.querySelectorAll("a.sitemap-item")
+
+  if (sitemapLinks.length > 0) {
+    // Find any <dl> wrapper acting as the parent container
+    document.querySelectorAll("dl.text-gray-600").forEach((dlElement) => {
+      // Create a clean unordered list element
+      const ulWrapper = document.createElement("ul")
+      ulWrapper.className = dlElement.className // Maintain styles
+      ulWrapper.style.listStyle = "none" // Keep formatting clean
+      ulWrapper.style.padding = "0"
+
+      // Find all nested <dd> elements inside this specific container
+      const ddElements = dlElement.querySelectorAll("dd")
+
+      ddElements.forEach((dd) => {
+        const li = document.createElement("li")
+        // Move any child nodes (like the anchor tags) from <dd> to the new <li>
+        while (dd.firstChild) {
+          li.appendChild(dd.firstChild)
+        }
+        ulWrapper.appendChild(li)
+      })
+
+      // Replace the invalid <dl> element completely with our compliant <ul>
+      dlElement.parentNode?.replaceChild(ulWrapper, dlElement)
+    })
+  }
 
   // =========================================================================
   // 3. FOOTER CONTRAST FIXES (WCAG AAA compliant)
   // =========================================================================
 
-  // Improve footer container contrast baseline (BEST FIX)
+  // Improve footer container contrast baseline
   const footer = document.querySelector<HTMLElement>("footer")
   if (footer) {
-    footer.style.backgroundColor = "#4a4a4a" // darker than #666666
+    footer.style.backgroundColor = "#4a4a4a"
     footer.style.color = "#ffffff"
   }
 
-  // Footer Titles (ensure AAA contrast)
+  // Footer Titles
   document
     .querySelectorAll<HTMLHeadingElement>("h4.text-gray-900")
     .forEach((el) => {
@@ -89,16 +120,16 @@ export default function () {
       }
     })
 
-  // Footer Address (improve readability + contrast)
+  // Footer Address
   document
     .querySelectorAll<HTMLParagraphElement>("p.text-gray-600")
     .forEach((el) => {
       if (el.textContent?.includes("Aseana Business Park")) {
-        el.style.color = "#f2f2f2" // softer white improves contrast perception
+        el.style.color = "#f2f2f2"
       }
     })
 
-  // Footer Version text (small text needs stronger contrast)
+  // Footer Version text
   document
     .querySelectorAll<HTMLSpanElement>("span.footer-item")
     .forEach((el) => {
@@ -108,7 +139,7 @@ export default function () {
       }
     })
 
-  // Privacy Policy link (increase contrast + focus visibility)
+  // Privacy Policy link
   const privacyLink = document.querySelector<HTMLAnchorElement>(
     'a[href="/privacy-policy/linkages-characteristics"]'
   )
@@ -117,29 +148,4 @@ export default function () {
     privacyLink.style.color = "#ffffff"
     privacyLink.style.textDecoration = "underline"
   }
-
-  // Fix: button-has-visible-text (WCAG 2 A 4.1.2)
-  // The mobile navbar toggle button contains only icon bars and lacks accessible text.
-  // Solution: Add an aria-label="Toggle navigation menu" to the button.
-  document
-    .querySelectorAll<HTMLButtonElement>("button.navbar-toggle")
-    .forEach((el) => {
-      if (el.getAttribute("data-target") === "#navbar-collapse-nav") {
-        el.setAttribute("aria-label", "Toggle navigation menu")
-      }
-    })
-
-  // Fix: image-alt-text (WCAG 2 A 1.1.1)
-  // Inline base64 image is missing an alternative text attribute.
-  // Solution: Add alt="" and role="presentation" if decorative, or a descriptive alt string.
-  document
-    .querySelectorAll<HTMLImageElement>("img[src^='data:image']")
-    .forEach((el) => {
-      // If the image is decorative (e.g., a spacer, icon background, or loader):
-      el.setAttribute("alt", "Banner of Department of Foreign Affairs")
-      el.setAttribute("role", "presentation")
-
-      // Note: If you discover this image actually represents something important (like a logo),
-      // change the code above to: el.setAttribute("alt", "Descriptive text here")
-    })
 }
