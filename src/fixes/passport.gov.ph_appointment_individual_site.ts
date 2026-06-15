@@ -1,5 +1,13 @@
 export default function () {
   // =========================================================================
+  // 0. DOCUMENT ROOT FIXES (WCAG 2 A 3.1.1)
+  // =========================================================================
+
+  // Fix: html-has-lang-attribute
+  // Explicitly sets the primary language of the document for screen readers
+  document.documentElement.setAttribute("lang", "en")
+
+  // =========================================================================
   // 1. INITIAL CONTRAST FIXES (Nodes 01-08)
   // =========================================================================
 
@@ -66,32 +74,25 @@ export default function () {
     })
 
   // Fix: description-list-hierarchy (WCAG 2 A 1.3.1)
-  // Instead of fighting <dl> structure requirements, we convert the broken
-  // description elements into a highly accessible Unordered List (<ul>/<li>).
   const sitemapLinks = document.querySelectorAll("a.sitemap-item")
 
   if (sitemapLinks.length > 0) {
-    // Find any <dl> wrapper acting as the parent container
     document.querySelectorAll("dl.text-gray-600").forEach((dlElement) => {
-      // Create a clean unordered list element
       const ulWrapper = document.createElement("ul")
-      ulWrapper.className = dlElement.className // Maintain styles
-      ulWrapper.style.listStyle = "none" // Keep formatting clean
+      ulWrapper.className = dlElement.className
+      ulWrapper.style.listStyle = "none"
       ulWrapper.style.padding = "0"
 
-      // Find all nested <dd> elements inside this specific container
       const ddElements = dlElement.querySelectorAll("dd")
 
       ddElements.forEach((dd) => {
         const li = document.createElement("li")
-        // Move any child nodes (like the anchor tags) from <dd> to the new <li>
         while (dd.firstChild) {
           li.appendChild(dd.firstChild)
         }
         ulWrapper.appendChild(li)
       })
 
-      // Replace the invalid <dl> element completely with our compliant <ul>
       dlElement.parentNode?.replaceChild(ulWrapper, dlElement)
     })
   }
