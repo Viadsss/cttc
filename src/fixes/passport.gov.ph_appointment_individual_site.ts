@@ -7,7 +7,7 @@ export default function () {
   document.documentElement.setAttribute("lang", "en")
 
   // =========================================================================
-  // 1. INITIAL CONTRAST FIXES (Nodes 01-08)
+  // 1. INITIAL CONTRAST & OVERLAP FIXES (Nodes 01-08)
   // =========================================================================
 
   // Nodes 01-06: Navigation links (#ffffff on #666666 is 5.74:1)
@@ -25,7 +25,6 @@ export default function () {
     if (href && navHrefs.includes(href)) {
       el.style.backgroundColor = "#444444"
       el.style.color = "#ffffff" // #ffffff on #444444 is 9.38:1 (Passes AAA)
-      el.style.padding = "2px 4px"
       el.style.borderRadius = "4px"
     }
   })
@@ -36,6 +35,9 @@ export default function () {
     .forEach((el) => {
       if (el.textContent?.includes("Fields with asterisks")) {
         el.style.color = "#b30027" // Passes AAA (> 7:1)
+        el.style.position = "relative"
+        el.style.zIndex = "10"
+        el.style.backgroundColor = "#ffffff"
       }
     })
 
@@ -52,11 +54,10 @@ export default function () {
   })
 
   // =========================================================================
-  // 2. ACCESSIBILITY STRUCTURE FIXES (Buttons, Images, Lists, & Links)
+  // 2. ACCESSIBILITY STRUCTURE & TARGET FIXES (Buttons, Images, Lists, & Links)
   // =========================================================================
 
   // Fix: link-has-discernible-text (WCAG 2 A 2.4.4 / 4.1.2)
-  // Give descriptive screen-reader names to icon-only step navigation links
   document
     .querySelectorAll<HTMLAnchorElement>("a[href='javascript:void(0)']")
     .forEach((el) => {
@@ -98,7 +99,7 @@ export default function () {
       el.setAttribute("role", "presentation")
     })
 
-  // Fix: description-list-hierarchy (WCAG 2 A 1.3.1)
+  // Fix: description-list-hierarchy (WCAG 2 A 1.3.1) & Target Size (WCAG 2.2 AA 2.5.8)
   const sitemapLinks = document.querySelectorAll("a.sitemap-item")
 
   if (sitemapLinks.length > 0) {
@@ -112,6 +113,8 @@ export default function () {
 
       ddElements.forEach((dd) => {
         const li = document.createElement("li")
+        li.style.marginBottom = "10px"
+
         while (dd.firstChild) {
           li.appendChild(dd.firstChild)
         }
@@ -120,10 +123,20 @@ export default function () {
 
       dlElement.parentNode?.replaceChild(ulWrapper, dlElement)
     })
+
+    document
+      .querySelectorAll<HTMLAnchorElement>("a.sitemap-item")
+      .forEach((el) => {
+        el.style.display = "inline-flex"
+        el.style.alignItems = "center"
+        el.style.minHeight = "26px"
+        el.style.padding = "4px 8px"
+        el.style.boxSizing = "border-box"
+      })
   }
 
   // =========================================================================
-  // 3. FOOTER CONTRAST FIXES (WCAG AAA compliant)
+  // 3. FOOTER CONTRAST & OVERLAP FIXES (WCAG AAA compliant)
   // =========================================================================
 
   // Improve footer container contrast baseline
@@ -131,6 +144,9 @@ export default function () {
   if (footer) {
     footer.style.backgroundColor = "#4a4a4a"
     footer.style.color = "#ffffff"
+    footer.style.position = "relative"
+    footer.style.display = "block"
+    footer.style.clear = "both"
   }
 
   // Footer Titles
@@ -162,6 +178,37 @@ export default function () {
       if (el.textContent?.includes("1.2.2")) {
         el.style.color = "#ffffff"
         el.style.fontWeight = "500"
+      }
+    })
+
+  // Fix Overlap/Contrast: Copyright Node Re-architecture
+  // Instead of struggling with inherited stylesheet overrides, we recreate this element cleanly.
+  document
+    .querySelectorAll<HTMLParagraphElement>("p.footer-item")
+    .forEach((el) => {
+      if (el.textContent?.includes("Copyright") && footer) {
+        // 1. Grab text content cleanly
+        const copyrightText = el.textContent.trim()
+
+        // 2. Create a clean replacement div to bypass parent element overlap issues
+        const newCopyrightBlock = document.createElement("div")
+        newCopyrightBlock.textContent = copyrightText
+
+        // 3. Enforce bulletproof isolated styling
+        newCopyrightBlock.style.color = "#ffffff"
+        newCopyrightBlock.style.backgroundColor = "#4a4a4a"
+        newCopyrightBlock.style.display = "block"
+        newCopyrightBlock.style.clear = "both"
+        newCopyrightBlock.style.width = "100%"
+        newCopyrightBlock.style.padding = "15px 0"
+        newCopyrightBlock.style.textAlign = "center"
+        newCopyrightBlock.style.fontSize = "14px"
+
+        // 4. Remove the problem node from DOM
+        el.remove()
+
+        // 5. Append clean container directly to footer root to isolate layout tracking
+        footer.appendChild(newCopyrightBlock)
       }
     })
 
