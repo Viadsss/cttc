@@ -217,6 +217,12 @@ Bar chart showing how many pages had at least one issue under each WCAG principl
 
 Bar chart showing the lowest failing WCAG conformance level (A, AA, AAA, or None) across all pages.
 
+#### 6. Per-Site Accessibility Scores
+
+Horizontal bar chart with one bar per evaluated website, sorted by score. Bars are colour-coded by compliance status — green for pages that passed the minimum WCAG 2.2 Level A standard, and red for pages that failed (amber is reserved for "unverified" pages, if any appear). Site labels are derived from each page's hostname.
+
+> **Figure 2.** Accessibility scores per evaluated Philippine government website. Green bars denote pages that passed minimum WCAG 2.2 Level A standards; red bars denote pages that failed.
+
 ### Key Findings (n = 25)
 
 | Metric                       | Value                                |

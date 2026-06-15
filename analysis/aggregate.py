@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pandas as pd
 import matplotlib
@@ -49,6 +50,13 @@ POUR_MAPPING_PATH = REFERENCE_DIR / "pour-mapping.csv"
 
 # Order used for sorting / display of conformance levels
 LEVEL_ORDER = ["A", "AA", "AAA", "None"]
+
+# Colours for per-site compliance status (used in Item 6)
+STATUS_COLORS = {
+    "passed": "#10b981",       # emerald-500
+    "failed": "#ef4444",       # red-500
+    "unverified": "#f59e0b",   # amber-500
+}
 
 
 # ── Loading ────────────────────────────────────────────────────────────────
@@ -464,6 +472,72 @@ def chart_conformance_level_distribution(df: pd.DataFrame) -> None:
     print(f"  -> chart saved to {out.relative_to(BASE_DIR)}")
 
 
+# ── Item 6: Per-Site Accessibility Scores ─────────────────────────────────
+
+
+def per_site_scores(summaries: pd.DataFrame) -> pd.DataFrame:
+    df = summaries[["page_id", "URL", "Score", "Meets Minimum Standard"]].copy()
+    df["site"] = df["URL"].apply(lambda u: urlparse(u).netloc.removeprefix("www."))
+    df = df.sort_values("Score", ascending=True).reset_index(drop=True)
+    return df[["site", "URL", "Score", "Meets Minimum Standard"]]
+
+
+def chart_per_site_scores(df: pd.DataFrame) -> None:
+    sites    = df["site"].tolist()
+    scores   = df["Score"].tolist()
+    statuses = df["Meets Minimum Standard"].tolist()
+
+    colors = [STATUS_COLORS.get(s, "#999999") for s in statuses]
+
+    n = len(sites)
+    y = np.arange(n)
+
+    fig, ax = plt.subplots(figsize=(8, max(6, n * 0.35)))
+
+    bars = ax.barh(y, scores, color=colors, height=0.6, linewidth=0)
+
+    text_color = plt.rcParams.get("text.color", "#333333")
+    for bar, score in zip(bars, scores):
+        ax.text(
+            bar.get_width() + 1, bar.get_y() + bar.get_height() / 2,
+            str(score), va="center", fontsize=9, color=text_color,
+        )
+
+    ax.set_yticks(y)
+    ax.set_yticklabels(sites, fontsize=9)
+    ax.set_xlabel("Accessibility Score", fontsize=11)
+    ax.set_xlim(0, 108)
+    ax.set_ylim(-0.5, n - 0.5)
+
+    ax.set_title(
+        "Per-Site Accessibility Scores",
+        fontsize=13, fontweight="bold", pad=12,
+    )
+
+    legend_patches = [
+        mpatches.Patch(color=STATUS_COLORS["passed"],
+                       label="Passed"),
+        mpatches.Patch(color=STATUS_COLORS["failed"],
+                       label="Failed"),
+    ]
+    if "unverified" in statuses:
+        legend_patches.append(
+            mpatches.Patch(color=STATUS_COLORS["unverified"],
+                           label="Unverified (needs manual review)")
+        )
+
+    ax.legend(handles=legend_patches, loc="lower right", frameon=False, fontsize=9)
+
+    ax.spines["left"].set_visible(False)
+    ax.tick_params(left=False)
+
+    fig.tight_layout()
+    out = OUTPUT_DIR / "6-per-site-scores.png"
+    fig.savefig(out, bbox_inches="tight")
+    plt.close(fig)
+    print(f"  -> chart saved to {out.relative_to(BASE_DIR)}")
+
+
 # ── Main ──────────────────────────────────────────────────────────────────
 
 
@@ -489,6 +563,7 @@ def main() -> int:
         "3-rule-level-aggregation": rule_level_aggregation(rules, n_pages),
         "4-pour-distribution": pour_distribution(rules, n_pages),
         "5-conformance-level-distribution": conformance_level_distribution(summaries),
+        "6-per-site-scores": per_site_scores(summaries),
     }
 
     for name, df in results.items():
@@ -505,6 +580,7 @@ def main() -> int:
     chart_rule_level_aggregation(results["3-rule-level-aggregation"])
     chart_pour_distribution(results["4-pour-distribution"], n_pages)
     chart_conformance_level_distribution(results["5-conformance-level-distribution"])
+    chart_per_site_scores(results["6-per-site-scores"])
 
     return 0
 

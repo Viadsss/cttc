@@ -1,0 +1,26 @@
+site,URL,Score,Meets Minimum Standard
+online.prc.gov.ph,https://online.prc.gov.ph/,45,failed
+clearance.nbi.gov.ph,https://clearance.nbi.gov.ph/,49,failed
+passport.gov.ph,https://passport.gov.ph/appointment/individual/site,52,failed
+dost.gov.ph,https://www.dost.gov.ph/,59,failed
+business.gov.ph,https://business.gov.ph/signup,60,failed
+bnrs.dti.gov.ph,https://bnrs.dti.gov.ph/search,61,failed
+csc.gov.ph,https://csc.gov.ph/,61,failed
+pagibigfundservices.com,https://www.pagibigfundservices.com/OnlineMembershipRegistration,64,failed
+treasury.gov.ph,https://www.treasury.gov.ph/,64,failed
+bir.gov.ph,https://www.bir.gov.ph/eServices,66,failed
+dmw.gov.ph,https://dmw.gov.ph/,72,failed
+ntc.gov.ph,https://ntc.gov.ph/,72,failed
+ltfrb.gov.ph,https://ltfrb.gov.ph/,73,failed
+psaserbilis.com.ph,https://www.psaserbilis.com.ph/BirthCertificate,74,passed
+member.sss.gov.ph,https://member.sss.gov.ph/member/pbl/register/exec,77,failed
+sei.dost.gov.ph,https://www.sei.dost.gov.ph/sei-today,78,failed
+immigration.gov.ph,https://immigration.gov.ph/,80,failed
+customs.gov.ph,https://customs.gov.ph/,81,failed
+pna.gov.ph,https://www.pna.gov.ph/,82,failed
+philhealth.gov.ph,https://www.philhealth.gov.ph/,86,passed
+e.gov.ph,https://e.gov.ph/,87,passed
+iis.emb.gov.ph,https://iis.emb.gov.ph/embis/,89,passed
+pnpclearance.ph,https://pnpclearance.ph/register,90,passed
+philsys.gov.ph,https://philsys.gov.ph/,93,passed
+science-scholarships.ph,https://science-scholarships.ph/Downloads,99,passed
