@@ -4,7 +4,6 @@ export default function () {
   // =========================================================================
 
   // Fix: html-has-lang-attribute
-  // Explicitly sets the primary language of the document for screen readers
   document.documentElement.setAttribute("lang", "en")
 
   // =========================================================================
@@ -53,8 +52,34 @@ export default function () {
   })
 
   // =========================================================================
-  // 2. ACCESSIBILITY STRUCTURE FIXES (Buttons, Images, & Lists)
+  // 2. ACCESSIBILITY STRUCTURE FIXES (Buttons, Images, Lists, & Links)
   // =========================================================================
+
+  // Fix: link-has-discernible-text (WCAG 2 A 2.4.4 / 4.1.2)
+  // Give descriptive screen-reader names to icon-only step navigation links
+  document
+    .querySelectorAll<HTMLAnchorElement>("a[href='javascript:void(0)']")
+    .forEach((el) => {
+      const icon = el.querySelector("i.fa")
+      if (icon) {
+        if (icon.classList.contains("fa-home")) {
+          el.setAttribute("aria-label", "Go to Home Step")
+        } else if (icon.classList.contains("fa-calendar")) {
+          el.setAttribute("aria-label", "Go to Schedule Date Step")
+        } else if (icon.classList.contains("fa-user")) {
+          el.setAttribute("aria-label", "Go to Personal Information Step")
+        } else if (icon.classList.contains("fa-users")) {
+          el.setAttribute(
+            "aria-label",
+            "Go to Family or Group Information Step"
+          )
+        } else if (icon.classList.contains("fa-list-alt")) {
+          el.setAttribute("aria-label", "Go to Application Review Step")
+        } else if (icon.classList.contains("fa-phone")) {
+          el.setAttribute("aria-label", "Go to Contact Details Step")
+        }
+      }
+    })
 
   // Fix: button-has-visible-text (WCAG 2 A 4.1.2)
   document
