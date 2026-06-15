@@ -2,6 +2,8 @@
 
 A Chrome extension that audits web pages for accessibility violations using [axe-core](https://github.com/dequelabs/axe-core), scored against the WCAG 2.2 standard. Built as a side panel extension so it stays open while you browse.
 
+This project serves as the tool/software of the final requirement for CTTC.
+
 Group Members:
 
 - Arejola, Jilliane Jae A.
